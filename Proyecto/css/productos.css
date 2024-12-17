@@ -50,10 +50,13 @@ h2 {
 }
 
 .producto-imagen {
-    max-width: 100%;
-    height: auto;
-    border-radius: 8px;
-    margin-bottom: 15px;
+    /*max-width: 100%;*/
+    /*height: auto;*/
+    /*border-radius: 8px;*/
+    /*margin-bottom: 15px;*/
+    width: 300px; /* Establece un ancho fijo */
+    height: 350px;
+
 }
 
 .producto-info {
