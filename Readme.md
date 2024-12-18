@@ -30,16 +30,16 @@
 </theader>
 <tbody>
 <tr><td>ASIGNATURA:</td><td colspan="5">Programación Web 1</td></tr>
-<tr><td>TÍTULO DEL PROYECTO:</td><td colspan="5">EPISx</td></tr>
+<tr><td>TÍTULO DEL PROYECTO:</td><td colspan="5">Tienda Virtual</td></tr>
 <tr>
-<td>NÚMERO DE PRÁCTICA:</td><td>07</td><td>AÑO LECTIVO:</td><td>2024 B</td><td>NRO. SEMESTRE:</td><td>II</td>
+<td>NÚMERO DE PRÁCTICA:</td><td></td><td>AÑO LECTIVO:</td><td>2024 B</td><td>NRO. SEMESTRE:</td><td>II</td>
 </tr>
 <tr>
-<td>FECHA INICIO::</td><td>05-Dic-2024</td><td>FECHA FIN:</td><td>08-Dic-2024</td><td>DURACIÓN:</td><td>48 horas</td>
+<td>FECHA INICIO::</td><td>07-Dic-2024</td><td>FECHA FIN:</td><td>18-Dic-2024</td><td>DURACIÓN:</td><td>47 horas</td>
 </tr>
 <tr><td colspan="6">ESTUDIANTES:
     <ul>
-	<h4>Mijael Leon</h4>
+	<h4>Mijael Paul Leon Ramos</h4>
         <h4>Limberg Sarmiento Tico</h4>        
         <h4>Christian Alexander Yana Huanca (Git-Hub)</h4>
     </ul>
@@ -90,29 +90,156 @@ repositorio en GitHub (Usamos el de Christian Alexander Yana Huanca)
     - https://github.com/ChristianAlexYana/Proyecto-PW.git
 #
 
+## Video Youtube Proyecto Final
+- Creamos un nuevo proyecto en GitHub
+    - https://github.com/ChristianAlexYana/Proyecto-PW.git
+#
+
 ## PROCESO
-- echo.pl se sigue el mismo formato que el de la practica
+- crud-scripts/controller/compras/create.perl
 
-Cargar tabla de registros: Al cargar la página, se realiza una solicitud AJAX (cargarTabla()) para obtener los datos de las mascotas registradas desde un script Perl (read.perl) que devuelve los datos en formato JSON. La información recibida se utiliza para generar y mostrar una tabla HTML con los registros, incluidos los botones para editar o eliminar cada mascota.
-
-
-- create.perl gestiona el registro de información sobre mascotas en una base de datos MariaDB, respondiendo a solicitudes HTTP y devolviendo resultados en formato JSON:
+Captura los parámetros email y producto_id enviados desde un formulario web utilizando el módulo CGI, y valida que ambos campos estén presentes. Si falta alguno, devuelve un mensaje de error en formato JSON. Luego, se conecta a una base de datos MariaDB usando DBI, prepara e intenta ejecutar una consulta SQL para insertar los datos en la tabla compras. Si la inserción es exitosa, responde con un mensaje de éxito en formato JSON, y si ocurre algún error durante la conexión o la ejecución, devuelve el error correspondiente. Finalmente, desconecta la base de datos.
 
 ```bash
- aqui  va codigo
+ #!/usr/bin/perl
+use strict;
+use warnings;
+use CGI;
+use DBI;
+use JSON;
+
+# Crear un objeto CGI para manejar los datos del formulario
+my $cgi = CGI->new();
+
+# Capturar los parámetros enviados desde el formulario
+my $email     = $cgi->param('email');
+my $producto_id      = $cgi->param('producto_id');
+
+# Imprimir el encabezado HTTP para devolver JSON
+print $cgi->header('application/json;charset=UTF-8');
+
+# Validar los datos de entrada
+if (!$email || !$producto_id ) {
+    print to_json({ error => "Todos los campos son obligatorios" });
+    exit;
+}
+
+# Conectar a la base de datos
+my $dsn = "DBI:MariaDB:database=datos;host=dbpets;port=3306";
+my $user = "root";
+my $password = "admin";
+
+my $dbh = DBI->connect($dsn, $user, $password, { RaiseError => 1, AutoCommit => 1 });
+if (!$dbh) {
+    print to_json({ error => "Error al conectar a la base de datos: " . DBI->errstr });
+    exit;
+}
+
+# Consulta SQL para insertar los datos
+my $sql = 'INSERT INTO compras (email, producto_id) VALUES (?, ?)';
+my $sth = $dbh->prepare($sql);
+if (!$sth) {
+    print to_json({ error => "Error al preparar la consulta: " . $dbh->errstr });
+    $dbh->disconnect();
+    exit;
+}
+
+# Ejecutar la consulta
+eval {
+    $sth->execute($email, $producto_id);
+};
+
+if ($@) {
+    print to_json({ error => "Error durante la inserción: $@" });
+} else {
+    # Respuesta JSON de éxito
+    # Enviar la respuesta JSON de éxito
+print to_json({
+    exito   => 1,  # Cambiar el campo a 'exito'
+    mensaje => "Datos registrados exitosamente",
+});
+
+}
+
+# Finalizar la declaración y desconectar
+$sth->finish();
+$dbh->disconnect();
+
 ```
+- crud-scripts/controller/compras/read.perl
 
-Manejo de datos del formulario: Utiliza la librería CGI para manejar los parámetros enviados desde un formulario web (como el nombre, propietario, especie, sexo, fecha de nacimiento y fallecimiento de la mascota). Si no se proporciona la fecha de fallecimiento, se establece como NULL (representado por undef en Perl).
+Conecta a una base de datos MariaDB, ejecuta una consulta SQL que selecciona información de las tablas compras y productos, y devuelve los resultados en formato JSON. La consulta obtiene los detalles de las compras, incluyendo el id, nombre, tipo, precio y url de los productos comprados. Los datos se almacenan en un array y se suman los precios de los productos. Finalmente, el script responde con un mensaje de éxito junto con los datos de los productos y la suma total de los precios, todo en formato JSON.
 
-Conexión a la base de datos: Se conecta a una base de datos MariaDB llamada mascotas mediante el módulo DBI, utilizando las credenciales de usuario (root/admin) y la dirección del servidor de la base de datos (dbpets).
+```bash
+ #!/usr/bin/perl
+use strict;
+use warnings;
+use CGI;
+use DBI;
+use JSON;
 
-Inserción de datos: Prepara y ejecuta una consulta SQL para insertar los datos de la mascota en una tabla pet. Los valores de los parámetros (name, owner, species, sex, birth, death) se pasan como parámetros preparados para evitar inyecciones SQL.
+# Crear un objeto CGI para manejar los datos del formulario
+my $cgi = CGI->new();
 
-Manejo de errores: Si ocurre un error durante la ejecución de la consulta (por ejemplo, problemas con la conexión o la consulta), se captura con eval y se devuelve un mensaje de error en formato JSON.
+# Capturar los parámetros enviados desde el formulario
+#my $name    = $cgi->param('name');
 
-Respuesta exitosa: Si la inserción es exitosa, se genera una respuesta JSON que confirma que los datos fueron registrados correctamente, incluyendo la información de la mascota registrada.
+# Imprimir el encabezado HTTP para devolver JSON
+print $cgi->header('application/json;charset=UTF-8');
 
-Finalización: Una vez ejecutada la consulta, se cierra la declaración SQL ($sth->finish()) y se desconecta de la base de datos.
+# Conectar a la base de datos
+my $dbh = DBI->connect("DBI:MariaDB:database=datos;host=dbpets;port=3306", 'root', 'admin', { RaiseError => 1, AutoCommit => 1 })
+  or die to_json({ error => "Error al conectar a la base de datos: " . DBI->errstr });
+
+# Consulta SQL para insertar los datos
+my $sql = 'SELECT compras.id, productos.nombre, productos.tipo, productos.precio, productos.url from compras JOIN productos ON compras.producto_id = productos.id';
+my $sth = $dbh->prepare($sql)
+  or die to_json({ error => "Error al preparar la consulta: " . $dbh->errstr });
+
+  
+
+# Ejecutar la consulta
+eval {
+    $sth->execute()
+      or die "Error al ejecutar la consulta: " . $sth->errstr;
+};
+
+if ($@) {
+    print to_json({ error => "Error durante la inserción: $@" });
+} else {
+
+  my @productos;  # Array para los registros
+my $suma_precio = 0;
+while (my $row = $sth->fetchrow_hashref) {
+    push @productos, {
+        id     => $row->{id},
+        nombre     => $row->{nombre},
+        tipo => $row->{tipo},
+        precio  => $row->{precio},
+        url  => $row->{url},
+};
+$suma_precio += $row->{precio};
+}
+
+# Convertir el array a JSON
+my $json = encode_json(\@productos);
+    # Respuesta JSON de éxito
+    print to_json({
+        mensaje => "Datos leidos exitosamente",
+        data    => \@productos,
+	suma    => $suma_precio,
+    });
+
+}
+
+# Finalizar la declaración y desconectar
+$sth->finish();
+$dbh->disconnect();
+```
+- 
+```bash
+
+```
 
 - delete.perl realiza la eliminación de una mascota de la base de datos:
 #
