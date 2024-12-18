@@ -2061,6 +2061,11 @@ INSERT INTO compras (email, producto_id) VALUES
     ('juan.perez@example.com', 2),
     ('sarmientolimver86@gmail.com', 3);
 ```
+- Base de datos: datos.sql
+
+![Base de Datos y Tablas](./imagenBD/TablasGeneral.jpg)
+![Tablas de Compras y Productos](./imagenBD/ComprasProductos.jpg)
+![Tabla de Usuarios](./imagenDB/Usuarios.jpg)
 
 #
 
