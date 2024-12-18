@@ -90,6 +90,11 @@ repositorio en GitHub (Usamos el de Christian Alexander Yana Huanca)
     - https://github.com/ChristianAlexYana/Proyecto-PW.git
 #
 
+## DESCRIPCION DE LA APLICACION
+
+Este proyecto es una aplicación web desarrollada en Perl, que permite la gestión de usuarios y productos en una tienda en línea. Utiliza CGI para interactuar con los usuarios a través de formularios dinámicos. Los usuarios pueden registrarse, iniciar sesión, ver productos, realizar compras y cerrar sesión. La autenticación se maneja mediante sesiones en el servidor, asegurando que solo los usuarios logueados puedan acceder a áreas protegidas del sistema. Los formularios de inicio de sesión y registro se validan de manera asíncrona mediante AJAX, mejorando la experiencia del usuario al evitar recargas innecesarias de la página. Además, la visualización de productos y el proceso de compra también se gestionan dinámicamente con AJAX. El sistema está diseñado para ser seguro y fácil de usar, proporcionando una interfaz amigable y una funcionalidad robusta para los usuarios.
+
+#
 ## Video Youtube Proyecto Final
 - Se crea un solo video donde se muestra todas las funcionalidaes del proyecto
  - 00:00 [![inicio](./imagenVideos/inicio.jpg)](https://www.youtube.com/watch?v=axf8S4xFhCI)
@@ -2071,7 +2076,7 @@ INSERT INTO compras (email, producto_id) VALUES
 
 ## CONCLUSIONES
 
-- El proyecto implementa un sistema de gestión de usuarios y compras para una tienda en línea utilizando Perl, CGI y AJAX. Los usuarios pueden registrarse, iniciar sesión y mantener su sesión activa mientras navegan por la tienda. El sistema valida las credenciales del usuario en el login y, si es correcto, lo redirige a la tienda. El formulario de registro recoge información como nombre, correo electrónico y contraseña, enviándola al servidor para crear un nuevo usuario. La tienda muestra productos dinámicamente utilizando AJAX, lo que permite cargar los datos sin recargar la página, y los usuarios pueden realizar compras, las cuales se gestionan mediante solicitudes al backend. La implementación de sesiones garantiza que solo los usuarios autenticados accedan a las funciones de compra.
+- El proyecto proporciona una solución funcional para la creación y gestión de una tienda en línea básica, utilizando tecnologías como Perl, CGI y AJAX para una interacción fluida. La gestión de sesiones y la validación de datos en tiempo real mejoran la experiencia del usuario, mientras que las medidas de seguridad, como la protección de rutas y la destrucción de sesiones, aseguran un manejo adecuado de la autenticación.
 
 #
 
