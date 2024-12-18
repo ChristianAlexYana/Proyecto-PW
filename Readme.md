@@ -92,13 +92,13 @@ repositorio en GitHub (Usamos el de Christian Alexander Yana Huanca)
 
 ## Video Youtube Proyecto Final
 - Se crea un solo video donde se muestra todas las funcionalidaes del proyecto
- - 00:00 [![inicio](imagenVideos/inicio.jpg)](https://www.youtube.com/watch?v=axf8S4xFhCI)
- - 00:48 [![Registrarse](imagenVideos/registro.jpg)](https://youtu.be/axf8S4xFhCI?t=48)
- - 01:12 [![Iniciar Sesión](imagenVideos/iniciarSesion.png)](https://youtu.be/axf8S4xFhCI?t=72)
- - 01:40 [![Quienes Somos](imagenVideos/quienesSomos.jpeg)](https://youtu.be/axf8S4xFhCI?t=100)
- - 02:18 [![Productos](imagenVideos/productos.jpg)](https://youtu.be/axf8S4xFhCI?t=139)
- - 03:37 [![Compras](imagenVideos/compras.jpg)](https://youtu.be/axf8S4xFhCI?t=217)
- - 04:08 [![Pago](imagenVideos/pagos.jpg)](https://youtu.be/axf8S4xFhCI?t=248)
+ - 00:00 [![inicio](./imagenVideos/inicio.jpg)](https://www.youtube.com/watch?v=axf8S4xFhCI)
+ - 00:48 [![Registrarse](./imagenVideos/registro.jpg)](https://youtu.be/axf8S4xFhCI?t=48)
+ - 01:12 [![Iniciar Sesión](./imagenVideos/iniciarSesion.png)](https://youtu.be/axf8S4xFhCI?t=72)
+ - 01:40 [![Quienes Somos](./imagenVideos/quienesSomos.jpeg)](https://youtu.be/axf8S4xFhCI?t=100)
+ - 02:18 [![Productos](./imagenVideos/productos.jpg)](https://youtu.be/axf8S4xFhCI?t=139)
+ - 03:37 [![Compras](./imagenVideos/compras.jpg)](https://youtu.be/axf8S4xFhCI?t=217)
+ - 04:08 [![Pago](./imagenVideos/pagos.jpg)](https://youtu.be/axf8S4xFhCI?t=248)
 
 #
 
@@ -1933,7 +1933,7 @@ EOF
 #
 
 ## CONCLUSIONES
-
+- El proyecto implementa un sistema de gestión de usuarios y compras para una tienda en línea utilizando Perl, CGI y AJAX. Los usuarios pueden registrarse, iniciar sesión y mantener su sesión activa mientras navegan por la tienda. El sistema valida las credenciales del usuario en el login y, si es correcto, lo redirige a la tienda. El formulario de registro recoge información como nombre, correo electrónico y contraseña, enviándola al servidor para crear un nuevo usuario. La tienda muestra productos dinámicamente utilizando AJAX, lo que permite cargar los datos sin recargar la página, y los usuarios pueden realizar compras, las cuales se gestionan mediante solicitudes al backend. La implementación de sesiones garantiza que solo los usuarios autenticados accedan a las funciones de compra.
 #
 
 ## RECOMENDACIONES
