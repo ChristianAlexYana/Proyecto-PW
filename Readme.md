@@ -2062,10 +2062,6 @@ INSERT INTO compras (email, producto_id) VALUES
     ('sarmientolimver86@gmail.com', 3);
 ```
 
-- datos.sql
-
-```bash
-```
 #
 
 ## CONCLUSIONES
