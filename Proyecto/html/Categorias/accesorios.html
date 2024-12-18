@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Electrónica - Tienda Virtual</title>
+    <link rel="stylesheet" href="../../css/productos.css">
+    <script>
+        function aumentarCantidad() {
+            let cantidad = document.getElementById("cantidad");
+            cantidad.value = parseInt(cantidad.value) + 1;
+        }
+
+        function reducirCantidad() {
+            let cantidad = document.getElementById("cantidad");
+            if (parseInt(cantidad.value) > 1) {
+                cantidad.value = parseInt(cantidad.value) - 1;
+            }
+        }
+
+        function añadirAlCarrito() {
+            alert("Producto añadido al carrito.");
+        }
+    </script>
+</head>
+<body>
+
+    <header>
+        <h1>Tienda Virtual</h1>
+        <nav>
+            <ul>
+                <li><a href="../index.html">Inicio</a></li>
+                <li><a href="../categorias.html">Categorías</a></li>
+                <li><a href="../sesion.html">Iniciar sesión</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+	<h2>Accesorios</h2>
+        <section id="sofas" class="productos">
+            <div class="categoria-container">
+                
+                <!-- Producto 1: Smartphone -->
+                <div class="producto">
+                    <img src="../../img/Accesorios/auricularesBluetooth.png" class="producto-imagen">
+                    <div class="producto-info">
+                        <h3>Auriculares Bluetooth</h3>
+                        <p>$59.99</p>
+                        <div class="cantidad">
+                            <button onclick="reducirCantidad()">-</button>
+                            <input type="number" id="cantidad" value="1" min="1">
+                            <button onclick="aumentarCantidad()">+</button>
+                        </div>
+                        <button onclick="añadirAlCarrito()">Añadir al carrito</button>
+                        <button>Comprar ahora</button>
+                    </div>
+                    <p class="descripcion">Este smartphone es ideal para quienes buscan un dispositivo rápido, con buena cámara y pantalla de alta calidad.</p>
+                </div>
+
+                <!-- Producto 2: Smartphone -->
+                <div class="producto">
+                    <img src="../../img/Accesorios/mouseInalambrico.png"  class="producto-imagen">
+                    <div class="producto-info">
+                        <h3>Mouse Inalambrico</h3>
+                        <p>$69.99</p>
+                        <div class="cantidad">
+                            <button onclick="reducirCantidad()">-</button>
+                            <input type="number" id="cantidad" value="1" min="1">
+                            <button onclick="aumentarCantidad()">+</button>
+                        </div>
+                        <button onclick="añadirAlCarrito()">Añadir al carrito</button>
+                        <button>Comprar ahora</button>
+                    </div>
+                    <p class="descripcion">Smartphone con una increíble cámara de 48 MP, ideal para capturar tus momentos favoritos.</p>
+                </div>
+
+                <!-- Producto 3: Computadora -->
+                <div class="producto">
+                    <img src="../../img/Accesorios/powerBank.png" class="producto-imagen">
+                    <div class="producto-info">
+                        <h3>Power Bank 10000mAh</h3>
+                        <p>$40.99</p>
+                        <div class="cantidad">
+                            <button onclick="reducirCantidad()">-</button>
+                            <input type="number" id="cantidad" value="1" min="1">
+                            <button onclick="aumentarCantidad()">+</button>
+                        </div>
+                        <button onclick="añadirAlCarrito()">Añadir al carrito</button>
+                        <button>Comprar ahora</button>
+                    </div>
+                    <p class="descripcion">Computadora de alto rendimiento con procesador Intel i7 y 16GB de RAM, ideal para trabajo y juegos.</p>
+                </div>
+
+                <!-- Producto 4: Computadora -->
+                <div class="producto">
+                    <img src="../../img/Accesorios/cargadorUSB-C.png" class="producto-imagen">
+                    <div class="producto-info">
+                        <h3>Sofa Modular</h3>
+                        <p>$25.99</p>
+                        <div class="cantidad">
+                            <button onclick="reducirCantidad()">-</button>
+                            <input type="number" id="cantidad" value="1" min="1">
+                            <button onclick="aumentarCantidad()">+</button>
+                        </div>
+                        <button onclick="añadirAlCarrito()">Añadir al carrito</button>
+                        <button>Comprar ahora</button>
+                    </div>
+                    <p class="descripcion">Computadora ultra rápida con una tarjeta gráfica dedicada, perfecta para diseñadores y gamers.</p>
+                </div>
+		
+		<!-- Producto 5 -->
+                <div class="producto">
+                    <img src="../../img/Accesorios/fundaTelefono.png" class="producto-imagen">
+                    <div class="producto-info">
+                        <h3>Funda para Telefono</h3>
+                        <p>$15.99</p>
+                        <div class="cantidad">
+                            <button onclick="reducirCantidad()">-</button>
+                            <input type="number" id="cantidad" value="1" min="1">
+                            <button onclick="aumentarCantidad()">+</button>
+                        </div>
+                        <button onclick="añadirAlCarrito()">Añadir al carrito</button>
+                        <button>Comprar ahora</button>
+                    </div>
+                    <p class="descripcion">Computadora ultra rápida con una tarjeta gráfica dedicada, perfecta para diseñadores y gamers.</p>
+                </div>
+
+
+                <!-- Puedes seguir añadiendo productos aquí... -->
+
+            </div>
+        </section>
+
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Tienda Virtual. Todos los derechos reservados.</p>
+    </footer>
+
+</body>
+</html>
