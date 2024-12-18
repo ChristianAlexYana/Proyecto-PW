@@ -236,12 +236,203 @@ my $json = encode_json(\@productos);
 $sth->finish();
 $dbh->disconnect();
 ```
-- 
+- crud-scripts/controller/login/auth.perl
+
+Gestiona la autenticación de un usuario a través de un formulario web. Captura los parámetros email y contrasena, valida que ambos campos estén presentes y que el formato del correo electrónico sea correcto. Luego, se conecta a una base de datos MariaDB y verifica si las credenciales del usuario coinciden con los registros en la tabla usuarios. Si el usuario es autenticado correctamente, crea una sesión utilizando el módulo CGI::Session y establece una cookie de sesión. Si la autenticación falla, devuelve un mensaje de error. La respuesta se envía en formato JSON, incluyendo un mensaje y el estado de la autenticación.
+
 ```bash
+#!/usr/bin/perl
+use strict;
+use warnings;
+use CGI;
+use CGI::Carp;
+use CGI::Session;
+use DBI;
+use JSON;
+
+my $cgi = CGI->new(); # create new CGI object
+
+# Capturar los parámetros enviados desde el formulario
+my $email      = $cgi->param('email');
+my $contrasena = $cgi->param('contrasena');
+
+# Validar los datos de entrada
+if (!$email || !$contrasena) {
+    print $cgi->header('application/json;charset=UTF-8');
+    print to_json({ error => "Todos los campos son obligatorios" });
+    exit;
+}
+
+# Validar que el email tenga un formato correcto
+if ($email !~ /^[a-zA-Z0-9_.+-]+\@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/) {
+    print $cgi->header('application/json;charset=UTF-8');
+    print to_json({ error => "El correo electrónico no es válido" });
+    exit;
+}
+
+# Conectar a la base de datos
+my $dsn = "DBI:MariaDB:database=datos;host=dbpets;port=3306";
+my $user = "root";
+my $password = "admin";
+
+my $dbh = DBI->connect($dsn, $user, $password, { RaiseError => 1, AutoCommit => 1 });
+if (!$dbh) {
+    print $cgi->header('application/json;charset=UTF-8');
+    print to_json({ error => "Error al conectar a la base de datos: " . DBI->errstr });
+    exit;
+}
+
+# Consulta SQL
+my $sql = 'SELECT * FROM usuarios WHERE email = ? AND contrasena = ?';
+my $sth = $dbh->prepare($sql);
+
+if (!$sth) {
+    print $cgi->header('application/json;charset=UTF-8');
+    print to_json({ error => "Error al preparar la consulta: " . $dbh->errstr });
+    $dbh->disconnect();
+    exit;
+}
+
+# Ejecutar la consulta
+eval {
+    $sth->execute($email, $contrasena);
+};
+
+if ($@) {
+    print $cgi->header('application/json;charset=UTF-8');
+    print to_json({ error => "Error durante la inserción: $@" });
+    exit;
+}
+
+# Verificar si el usuario existe
+my $row = $sth->fetchrow_hashref();
+if ($row) {
+    CGI::Session->name("PW1");
+    my $session_id = $cgi->cookie('SESSION_ID') || undef;
+    my $session = CGI::Session->new("driver:File", $session_id, {Directory => '/usr/local/apache2/cgi-bin/controller/tmp'});
+
+    # Validar si la sesión se creó correctamente
+    if (!$session) {
+        print $cgi->header('application/json;charset=UTF-8');
+        print to_json({ error => "No se pudo inicializar la sesión" });
+        exit;
+    }
+
+    # Limpiar y configurar la sesión
+    $session->clear(["_IS_LOGGED_IN"]);
+    $session->expire(_IS_LOGGED_IN => '+10m');
+    $session->param('_EMAIL', $email);
+    $session->flush();
+
+    my $cookie = $cgi->cookie(-name => 'SESSION_ID', -value => $session->id, -expires => '+10m');
+    print $cgi->header(-type => 'application/json;charset=UTF-8', -cookie => $cookie);
+
+    print to_json({
+        status   => 'OK',
+        mensaje  => "Usuario autentificado",
+        email    => $email
+    });
+} else {
+    print $cgi->header('application/json;charset=UTF-8');
+    print to_json({
+        status   => 'ERROR',
+        mensaje  => "Usuario NO autentificado",
+        email    => undef
+    });
+}
+
+# Finalizar la declaración y desconectar
+$sth->finish();
+$dbh->disconnect();
 
 ```
 
+- crud-scripts/controller/login/create.perl
+
+Maneja el registro de un nuevo usuario a través de un formulario web. Captura los parámetros nombre, email y contrasena, valida que todos los campos estén presentes y que el formato del correo electrónico sea correcto. Luego, se conecta a una base de datos MariaDB y ejecuta una consulta SQL para insertar los datos del usuario en la tabla usuarios. Si la inserción es exitosa, responde con un mensaje en formato JSON indicando que los datos fueron registrados correctamente. Si ocurre un error en cualquiera de los pasos, se devuelve un mensaje de error en formato JSON.
+
+```bash
+#!/usr/bin/perl
+use strict;
+use warnings;
+use CGI;
+use DBI;
+use JSON;
+
+# Crear un objeto CGI para manejar los datos del formulario
+my $cgi = CGI->new();
+
+# Capturar los parámetros enviados desde el formulario
+my $nombre     = $cgi->param('nombre');
+my $email      = $cgi->param('email');
+my $contrasena = $cgi->param('contrasena');
+
+# Imprimir el encabezado HTTP para devolver JSON
+print $cgi->header('application/json;charset=UTF-8');
+
+# Validar los datos de entrada
+if (!$nombre || !$email || !$contrasena) {
+    print to_json({ error => "Todos los campos son obligatorios" });
+    exit;
+}
+
+# Validar que el email tenga un formato correcto
+if ($email !~ /^[a-zA-Z0-9_.+-]+\@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/) {
+    print to_json({ error => "El correo electrónico no es válido" });
+    exit;
+}
+
+# Conectar a la base de datos
+my $dsn = "DBI:MariaDB:database=datos;host=dbpets;port=3306";
+my $user = "root";
+my $password = "admin";
+
+my $dbh = DBI->connect($dsn, $user, $password, { RaiseError => 1, AutoCommit => 1 });
+if (!$dbh) {
+    print to_json({ error => "Error al conectar a la base de datos: " . DBI->errstr });
+    exit;
+}
+
+# Consulta SQL para insertar los datos
+my $sql = 'INSERT INTO usuarios (nombre, email, contrasena) VALUES (?, ?, ?)';
+my $sth = $dbh->prepare($sql);
+if (!$sth) {
+    print to_json({ error => "Error al preparar la consulta: " . $dbh->errstr });
+    $dbh->disconnect();
+    exit;
+}
+
+# Ejecutar la consulta
+eval {
+    $sth->execute($nombre, $email, $contrasena);
+};
+
+if ($@) {
+    print to_json({ error => "Error durante la inserción: $@" });
+} else {
+    # Respuesta JSON de éxito
+    # Enviar la respuesta JSON de éxito
+print to_json({
+    exito   => 1,  # Cambiar el campo a 'exito'
+    mensaje => "Datos registrados exitosamente",
+    nombre  => $nombre,
+    email   => $email
+});
+
+}
+
+# Finalizar la declaración y desconectar
+$sth->finish();
+$dbh->disconnect();
+
+```
 - delete.perl realiza la eliminación de una mascota de la base de datos:
+
+
+
+```bash
+
+```
 #
 
 ## REFERENCIAS
