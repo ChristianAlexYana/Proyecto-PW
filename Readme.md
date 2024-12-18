@@ -2075,7 +2075,9 @@ INSERT INTO compras (email, producto_id) VALUES
 #
 
 ## RECOMENDACIONES
-
+- Utilizar algoritmos diseñados específicamente para la seguridad de contraseñas. Los cuales están diseñados para ser lentos y difíciles de vulnerar mediante ataques de fuerza bruta.
+- Evitar almacenar las contraseñas de los usuarios en texto claro en la base de datos.
+- Tener claro que tipo de proyecto deseas realizar, hacer consultas si es necesario
 #
 
 [license]: https://img.shields.io/github/license/rescobedoq/pw2?label=rescobedoq
