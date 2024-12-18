@@ -81,11 +81,19 @@ print <<EOF;
         <form action="myscript.perl">
             <div class="form-group">
                 <label for="nombre">Nombre:</label>
+<<<<<<< HEAD
                 <input type="text" class="form-control" id="nombre" placeholder="Ingrese el nombre de la mascota" name="nombre">
             </div>
             <div class="form-group">
                 <label for="precio">Precio:</label>
                 <input type="text" class="form-control" id="precio" placeholder="Ingrese el nombre del propietario" name="precio">
+=======
+                <input type="text" class="form-control" id="nombre" placeholder="Ingrese el nombre del producto" name="nombre">
+            </div>
+            <div class="form-group">
+                <label for="precio">Precio:</label>
+                <input type="text" class="form-control" id="precio" placeholder="Ingrese el precio" name="precio">
+>>>>>>> LimbergSarmiento
             </div>
             <div class="form-group">
                 <label for="tipo">Tipo:</label>
@@ -173,11 +181,19 @@ print <<EOF;
 						let nombre = \$(this).data('nombre');
 						console.log(nombre);
 
+<<<<<<< HEAD
 						editarMascota(id);
 					});
 					\$(".deleteBtn").on('click', function() {
 						let id = \$(this).data('id');
 						eliminarMascota(id);
+=======
+						editarProducto(id);
+					});
+					\$(".deleteBtn").on('click', function() {
+						let id = \$(this).data('id');
+						eliminarProducto(id);
+>>>>>>> LimbergSarmiento
 					});
 				})
 				.fail(function(jqXHR, textStatus) {
@@ -225,7 +241,11 @@ print <<EOF;
 
 				// Recoger los datos del formulario
 				var formData = {
+<<<<<<< HEAD
 					id: \$('#editForm').data('id'), // Obtener el id de la mascota a editar
+=======
+					id: \$('#editForm').data('id'), // Obtener el id del producto a editar
+>>>>>>> LimbergSarmiento
 					nombre: \$('#editNombre').val(),
 					precio: \$('#editPrecio').val(),
 					tipo: \$('#editTipo').val(),
@@ -234,7 +254,11 @@ print <<EOF;
 
 				// Enviar la solicitud AJAX para actualizar los datos
 				\$.ajax({
+<<<<<<< HEAD
 					url: "/cgi-bin/controller/productos/update.perl", // Archivo Perl que actualiza la mascota en la base de datos
+=======
+					url: "/cgi-bin/controller/productos/update.perl", // Archivo Perl que actualiza el producto en la base de datos
+>>>>>>> LimbergSarmiento
 					type: "POST",
 					data: formData,
 					dataType: "json",
@@ -254,9 +278,15 @@ print <<EOF;
 			});
 
 			// eliminar
+<<<<<<< HEAD
 			function eliminarMascota(id) {
 				console.log("id", id);
 				if (confirm("¿Estás seguro de que deseas eliminar esta mascota?")) {
+=======
+			function eliminarProducto(id) {
+				console.log("id", id);
+				if (confirm("¿Estás seguro de que deseas eliminar esta producto?")) {
+>>>>>>> LimbergSarmiento
 					var request = \$.ajax({
 						url: "/cgi-bin/controller/productos/delete.perl", // El archivo Perl para eliminar un registro
 						type: "POST",
@@ -275,10 +305,17 @@ print <<EOF;
 			}
 
 			// abrir modal
+<<<<<<< HEAD
 			function editarMascota(id) {
 				// Hacer una solicitud para obtener los datos de la mascota
 				\$.ajax({
 					url: "/cgi-bin/controller/productos/findbyid.perl", // Un script que devolverá los datos de la mascota en formato JSON
+=======
+			function editarProducto(id) {
+				// Hacer una solicitud para obtener los datos del producto
+				\$.ajax({
+					url: "/cgi-bin/controller/productos/findbyid.perl", // Un script que devolverá los datos del producto en formato JSON
+>>>>>>> LimbergSarmiento
 					type: "GET",
 					data: { id: id },
 					dataType: "json",
@@ -286,7 +323,11 @@ print <<EOF;
 						if (data.error) {
 							alert("Error: " + data.error);
 						} else {
+<<<<<<< HEAD
 							// Rellenar los campos del modal con los datos de la mascota
+=======
+							// Rellenar los campos del modal con los datos del producto
+>>>>>>> LimbergSarmiento
 							\$('#editNombre').val(data.nombre);
 							\$('#editPrecio').val(data.precio);
 							\$('#editTipo').val(data.tipo);
@@ -310,3 +351,7 @@ print <<EOF;
 </html>
 
 EOF
+<<<<<<< HEAD
+=======
+
+>>>>>>> LimbergSarmiento

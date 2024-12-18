@@ -171,7 +171,11 @@ if ($session->param('_EMAIL')) {
 					});
 					\$(".deleteBtn").on('click', function() {
 						let id = \$(this).data('id');
+<<<<<<< HEAD
 						eliminarMascota(id);
+=======
+						eliminarProducto(id);
+>>>>>>> LimbergSarmiento
 					});
 				})
 				.fail(function(jqXHR, textStatus) {

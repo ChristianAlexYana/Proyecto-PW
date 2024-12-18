@@ -83,4 +83,8 @@ print <<'EOF';
 </body>
 
 </html>
+<<<<<<< HEAD
 EOF
+=======
+EOF
+>>>>>>> LimbergSarmiento
