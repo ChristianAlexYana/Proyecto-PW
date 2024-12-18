@@ -92,13 +92,13 @@ repositorio en GitHub (Usamos el de Christian Alexander Yana Huanca)
 
 ## Video Youtube Proyecto Final
 - Se crea un solo video donde se muestra todas las funcionalidaes del proyecto
- - 00:00 inicio  [![Imagen](imagenVideos/inicio.jpg)](https://www.youtube.com/watch?v=axf8S4xFhCI)
- - 00:48 Registrarse   [![Imagen](imagenVideos/registro.jpg)](https://youtu.be/axf8S4xFhCI?t=48)
- - 01:12 Iniciar Sesión  [![Imagen](imagenVideos/iniciarSesion.png)](https://youtu.be/axf8S4xFhCI?t=72)
- - 01:40 Quienes Somos  [![Imagen](imagenVideos/quienesSomos.jpeg)](https://youtu.be/axf8S4xFhCI?t=100)
- - 02:18 Productos  [![Imagen](imagenVideos/productos.jpg)](https://youtu.be/axf8S4xFhCI?t=139)
- - 03:37 Compras  [![Imagen](imagenVideos/compras.jpg)](https://youtu.be/axf8S4xFhCI?t=217)
- - 04:08 Pago  [![Imagen](imagenVideos/pagos.jpg)](https://youtu.be/axf8S4xFhCI?t=248)
+ - 00:00 [![inicio](imagenVideos/inicio.jpg)](https://www.youtube.com/watch?v=axf8S4xFhCI)
+ - 00:48 [![Registrarse](imagenVideos/registro.jpg)](https://youtu.be/axf8S4xFhCI?t=48)
+ - 01:12 [![Iniciar Sesión](imagenVideos/iniciarSesion.png)](https://youtu.be/axf8S4xFhCI?t=72)
+ - 01:40 [![Quienes Somos](imagenVideos/quienesSomos.jpeg)](https://youtu.be/axf8S4xFhCI?t=100)
+ - 02:18 [![Productos](imagenVideos/productos.jpg)](https://youtu.be/axf8S4xFhCI?t=139)
+ - 03:37 [![Compras](imagenVideos/compras.jpg)](https://youtu.be/axf8S4xFhCI?t=217)
+ - 04:08 [![Pago](imagenVideos/pagos.jpg)](https://youtu.be/axf8S4xFhCI?t=248)
 
 #
 
