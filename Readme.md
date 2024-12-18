@@ -1735,17 +1735,193 @@ HTML
 ```
 - crud-scripts/controller/view/public/login.perl
 
-
+Verifica si el usuario ya está logueado mediante una sesión activa. Si es así, redirige al usuario a la página de la tienda. Si el usuario no está logueado, muestra un formulario HTML para ingresar el correo electrónico y la contraseña. Cuando el usuario envía el formulario, los datos se envían a un archivo Perl que valida el inicio de sesión. Si la autenticación es exitosa, el usuario es redirigido a la tienda; si hay un error, se muestra una alerta. También incluye un enlace para que los nuevos usuarios se registren.
 
 ```bash
+#!/usr/bin/perl
+use strict;
+use warnings;
+use CGI;
+use DBI;
+use JSON;
 
+use CGI::Session;
+
+# Crear objeto CGI
+my $cgi = CGI->new();
+
+# Crear una nueva sesión o recuperar la existente
+my $session = CGI::Session->load("driver:File", $cgi->cookie('SESSION_ID') || undef, {Directory => '/usr/local/apache2/cgi-bin/controller/tmp'});
+
+# Verificar si la sesión es válida y contiene información de inicio de sesión
+if ($session && $session->param('_EMAIL')) {
+    # Si el usuario ya está logueado, redirigir a tienda.pl
+    print $cgi->redirect(-uri => '/cgi-bin/view/private/tienda.perl');
+    exit;
+}
+
+# Obtener parámetros si se envían (para la validación del login)
+my $email      = $cgi->param('email');
+my $contrasena = $cgi->param('contrasena');
+
+# Imprimir cabecera HTTP
+print $cgi->header('text/html; charset=UTF-8');
+
+# Mostrar el formulario de inicio de sesión
+print <<'EOF';
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <title>Iniciar Sesión</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h2>Iniciar Sesión</h2>
+        
+            <div class="form-group">
+                <label for="email">Correo Electrónico:</label>
+                <input type="email" class="form-control" id="email" name="email" placeholder="Ingrese su correo" required>
+            </div>
+            <div class="form-group">
+                <label for="contrasena">Contraseña:</label>
+                <input type="password" class="form-control" id="contrasena" name="contrasena" placeholder="Ingrese su contraseña" required>
+            </div>
+            <button class="btn btn-primary btn_login">Iniciar Sesión</button>
+        <p>¿No tienes cuenta? <a href="/cgi-bin/view/public/registro.perl">Regístrate aquí</a></p>
+    </div>
+	<script>
+		$(document).ready(function() {
+			$('.btn_login').on('click', function(e) {
+				var objectEvent = $(this);
+				e.preventDefault();
+					var dt = {
+						email: $("#email").val(),
+						contrasena: $("#contrasena").val(),
+					};
+					console.log(dt);
+					var request = $.ajax({
+						url: "/cgi-bin/controller/login/auth.perl",
+						type: "POST",
+						data: dt,
+						dataType: "json"
+					});
+					request.done(function(dataset) {
+						console.log(dataset);
+                        window.location.href = "/cgi-bin/view/private/tienda.perl";
+					});
+					request.fail(function(jqXHR, textStatus) {
+						alert("Error en la solicitud: " + textStatus);
+					});
+			});
+		});
+	</script>
+</body>
+
+</html>
+<<<<<<< HEAD
+EOF
+=======
+EOF
+>>>>>>> LimbergSarmiento
 ```
 - crud-scripts/controller/view/public/registro.perl
 
-
+El formulario permite al usuario ingresar su nombre, correo electrónico y contraseña. Al enviar el formulario, los datos se envían de manera asíncrona (usando AJAX) a un archivo Perl (create.perl) para ser procesados. Si el registro es exitoso, se muestra un mensaje de éxito; si hay un error, se muestra un mensaje de error. Los campos deben ser rellenados si o si.
 
 ```bash
+#!/usr/bin/perl
+use strict;
+use warnings;
 
+# Imprimir cabecera HTTP válida
+print "Content-type: text/html\n\n";
+
+print <<EOF;
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <title>Formulario de Registro</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h2>Formulario de Registro</h2>
+        <form id="formRegistro">
+            <div class="form-group">
+                <label for="nombre">Nombre:</label>
+                <input type="text" class="form-control" id="nombre" name="nombre" placeholder="Ingrese su nombre" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Correo Electrónico:</label>
+                <input type="email" class="form-control" id="email" name="email" placeholder="Ingrese su correo" required>
+            </div>
+            <div class="form-group">
+                <label for="contrasena">Contraseña:</label>
+                <input type="password" class="form-control" id="contrasena" name="contrasena" placeholder="Ingrese su contraseña" required>
+            </div>
+            <div class="form-group">
+                <div id="respuesta" class="alert" style="display:none;"></div>
+            </div>
+            <button type="submit" class="btn btn-primary">Registrar</button>
+        </form>
+    </div>
+
+    <script>
+        \$(document).ready(function () {
+            \$("#formRegistro").on("submit", function (event) {
+                event.preventDefault(); // Prevenir el comportamiento predeterminado del formulario
+
+                // Recoger los datos del formulario
+                const datos = {
+                    nombre: \$("#nombre").val(),
+                    email: \$("#email").val(),
+                    contrasena: \$("#contrasena").val(),
+                };
+
+                // Enviar los datos al archivo create.perl usando AJAX
+                \$.ajax({
+                    url: "/cgi-bin/controller/login/create.perl",
+                    type: "POST",
+                    data: datos,
+                    dataType: "json",
+                   success: function (respuesta) {
+                   if (respuesta.exito) {  // Verifica el campo 'exito'
+                  \$("#respuesta")
+                   .removeClass("alert-danger")
+                     .addClass("alert-success")
+                    .text(respuesta.mensaje)  // Usa el mensaje de éxito
+                    .show();
+                    } else {
+                   \$("#respuesta")
+                   .removeClass("alert-success")
+                    .addClass("alert-danger")
+                    .text("Error: " + respuesta.mensaje)  // Si 'exito' es false, muestra el error
+                    .show();
+                      }
+                  },
+                    error: function () {
+                        \$("#respuesta")
+                            .removeClass("alert-success")
+                            .addClass("alert-danger")
+                            .text("Error al registrar los datos.")
+                            .show();
+                    },
+                });
+            });
+        });
+    </script>
+</body>
+</html>
+EOF
 ```
 #
 
