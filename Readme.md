@@ -426,7 +426,265 @@ $sth->finish();
 $dbh->disconnect();
 
 ```
-- delete.perl realiza la eliminación de una mascota de la base de datos:
+- crud-scripts/controller/productos/create.perl
+
+Maneja el registro de un nuevo producto a través de un formulario web. Captura los parámetros nombre, tipo, precio y url, valida que los campos nombre, tipo y precio estén presentes. Luego, se conecta a una base de datos MariaDB y ejecuta una consulta SQL para insertar los datos del producto en la tabla productos. Si la inserción es exitosa, responde con un mensaje en formato JSON indicando que los datos fueron registrados correctamente. Si ocurre un error en alguno de los pasos, se devuelve un mensaje de error en formato JSON.
+
+```bash
+#!/usr/bin/perl
+use strict;
+use warnings;
+use CGI;
+use DBI;
+use JSON;
+
+# Crear un objeto CGI para manejar los datos del formulario
+my $cgi = CGI->new();
+
+# Capturar los parámetros enviados desde el formulario
+my $nombre     = $cgi->param('nombre');
+my $tipo      = $cgi->param('tipo');
+my $precio = $cgi->param('precio');
+my $url = $cgi->param('url');
+
+# Imprimir el encabezado HTTP para devolver JSON
+print $cgi->header('application/json;charset=UTF-8');
+
+# Validar los datos de entrada
+if (!$nombre || !$tipo || !$precio) {
+    print to_json({ error => "Todos los campos son obligatorios" });
+    exit;
+}
+
+# Conectar a la base de datos
+my $dsn = "DBI:MariaDB:database=datos;host=dbpets;port=3306";
+my $user = "root";
+my $password = "admin";
+
+my $dbh = DBI->connect($dsn, $user, $password, { RaiseError => 1, AutoCommit => 1 });
+if (!$dbh) {
+    print to_json({ error => "Error al conectar a la base de datos: " . DBI->errstr });
+    exit;
+}
+
+# Consulta SQL para insertar los datos
+my $sql = 'INSERT INTO productos (nombre, tipo, precio, url) VALUES (?, ?, ?, ?)';
+my $sth = $dbh->prepare($sql);
+if (!$sth) {
+    print to_json({ error => "Error al preparar la consulta: " . $dbh->errstr });
+    $dbh->disconnect();
+    exit;
+}
+
+# Ejecutar la consulta
+eval {
+    $sth->execute($nombre, $tipo, $precio, $url);
+};
+
+if ($@) {
+    print to_json({ error => "Error durante la inserción: $@" });
+} else {
+    # Respuesta JSON de éxito
+    # Enviar la respuesta JSON de éxito
+print to_json({
+    exito   => 1,  # Cambiar el campo a 'exito'
+    mensaje => "Datos registrados exitosamente",
+    nombre  => $nombre,
+    tipo   => $tipo
+});
+
+}
+
+# Finalizar la declaración y desconectar
+$sth->finish();
+$dbh->disconnect();
+
+```
+- crud-scripts/controller/productos/delete.perl
+
+Recibe un parámetro id a través de un formulario CGI. Conecta a una base de datos MariaDB, prepara y ejecuta una consulta SQL para eliminar un registro de la tabla productos cuyo id coincida con el proporcionado. Si ocurre algún error en la ejecución, devuelve un mensaje de error en formato JSON. Si la operación es exitosa, responde con un mensaje de éxito y el id del registro eliminado en formato JSON.
+
+```bash
+#!/usr/bin/perl
+use strict;
+use warnings;
+use CGI;
+use DBI;
+use JSON;
+
+# Crear un objeto CGI para manejar los datos del formulario
+my $cgi = CGI->new();
+
+# Capturar los parámetros enviados desde el formulario
+my $id    = $cgi->param('id');
+
+
+# Imprimir el encabezado HTTP para devolver JSON
+print $cgi->header('application/json;charset=UTF-8');
+
+# Conectar a la base de datos
+my $dbh = DBI->connect("DBI:MariaDB:database=datos;host=dbpets;port=3306", 'root', 'admin', { RaiseError => 1, AutoCommit => 1 })
+  or die to_json({ error => "Error al conectar a la base de datos: " . DBI->errstr });
+
+# Consulta SQL para insertar los datos
+my $sql = 'DELETE FROM productos WHERE id = ?';
+my $sth = $dbh->prepare($sql)
+  or die to_json({ error => "Error al preparar la consulta: " . $dbh->errstr });
+
+# Ejecutar la consulta
+eval {
+    $sth->execute($id)
+      or die "Error al ejecutar la consulta: " . $sth->errstr;
+};
+
+if ($@) {
+    print to_json({ error => "Error durante la inserción: $@" });
+} else {
+    # Respuesta JSON de éxito
+    print to_json({
+        id => $id,
+        mensaje => "Dato eliminado exitosamente",
+        
+    });
+}
+
+# Finalizar la declaración y desconectar
+$sth->finish();
+$dbh->disconnect();
+```
+
+- crud-scripts/controller/productos/findbyd.perl
+
+Maneja la consulta de un producto en la base de datos a través de un formulario web. Captura el parámetro id enviado desde el formulario, se conecta a una base de datos MariaDB y ejecuta una consulta SQL para obtener los detalles del producto con el ID especificado. Si el producto existe, devuelve los datos del producto en formato JSON. Si no se encuentra el producto o ocurre un error en cualquiera de los pasos, devuelve un mensaje de error en formato JSON.
+
+```bash
+#!/usr/bin/perl
+use strict;
+use warnings;
+use CGI;
+use DBI;
+use JSON;
+
+# Crear un objeto CGI para manejar los datos del formulario
+my $cgi = CGI->new();
+
+# Capturar los parámetros enviados desde el formulario
+my $id    = $cgi->param('id');
+
+# Imprimir el encabezado HTTP para devolver JSON
+print $cgi->header('application/json;charset=UTF-8');
+
+# Conectar a la base de datos
+my $dbh = DBI->connect("DBI:MariaDB:database=datos;host=dbpets;port=3306", 'root', 'admin', { RaiseError => 1, AutoCommit => 1 })
+  or die to_json({ error => "Error al conectar a la base de datos: " . DBI->errstr });
+
+# Consulta SQL para insertar los datos
+my $sql = 'SELECT * from productos WHERE id = ?';
+my $sth = $dbh->prepare($sql)
+  or die to_json({ error => "Error al preparar la consulta: " . $dbh->errstr });
+
+  
+
+# Ejecutar la consulta
+eval {
+    $sth->execute($id)
+      or die "Error al ejecutar la consulta: " . $sth->errstr;
+};
+
+my $row = $sth->fetchrow_hashref();
+
+if ($@) {
+    print to_json({ error => "Error durante la inserción: $@" });
+} else {
+
+if ($row) {
+    print to_json({
+        id => $row->{id},
+        nombre => $row->{nombre},
+        tipo => $row->{tipo},
+        precio => $row->{precio},
+        url => $row->{url},
+    });
+} else {
+    print to_json({ error => "Producto no encontrada" });
+}
+}
+
+# Finalizar la declaración y desconectar
+$sth->finish();
+$dbh->disconnect();
+```
+
+- crud-scripts/controller/productos/read.perl
+
+Consulta todos los productos de una base de datos MariaDB y devuelve los resultados en formato JSON. Se conecta a la base de datos, ejecuta una consulta SQL para obtener todos los productos de la tabla productos, y luego almacena los datos (como id, nombre, tipo, precio y url) en un array. Si la consulta es exitosa, devuelve los productos en formato JSON con un mensaje de éxito.
+
+
+```bash
+#!/usr/bin/perl
+use strict;
+use warnings;
+use CGI;
+use DBI;
+use JSON;
+
+# Crear un objeto CGI para manejar los datos del formulario
+my $cgi = CGI->new();
+
+# Imprimir el encabezado HTTP para devolver JSON
+print $cgi->header('application/json;charset=UTF-8');
+
+# Conectar a la base de datos
+my $dbh = DBI->connect("DBI:MariaDB:database=datos;host=dbpets;port=3306", 'root', 'admin', { RaiseError => 1, AutoCommit => 1 })
+  or die encode_json({ error => "Error al conectar a la base de datos: " . DBI->errstr });
+
+# Consulta SQL para obtener los datos
+my $sql = 'SELECT * from productos';
+my $sth = $dbh->prepare($sql)
+  or die encode_json({ error => "Error al preparar la consulta: " . $dbh->errstr });
+
+# Ejecutar la consulta
+eval {
+    $sth->execute()
+      or die "Error al ejecutar la consulta: " . $sth->errstr;
+};
+
+if ($@) {
+    print encode_json({ error => "Error durante la consulta: $@" });
+} else {
+    my @productos;  # Array para los registros
+    while (my $row = $sth->fetchrow_hashref) {
+        push @productos, {
+            id     => $row->{id},
+            nombre => $row->{nombre},
+            tipo   => $row->{tipo},
+            precio => $row->{precio},
+            url => $row->{url},
+        };
+    }
+
+    # Convertir el array de productos a JSON y enviarlo como respuesta
+    print encode_json({
+        mensaje => "Datos leídos exitosamente",
+        data    => \@productos,
+    });
+}
+
+# Finalizar la declaración y desconectar
+$sth->finish();
+$dbh->disconnect();
+
+```
+
+- crud-scripts/controller/productos/create.perl
+
+
+
+```bash
+
+```
+
+- crud-scripts/controller/productos/create.perl
 
 
 
