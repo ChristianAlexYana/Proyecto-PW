@@ -77,7 +77,7 @@ if ($row) {
 
     # Limpiar y configurar la sesión
     $session->clear(["_IS_LOGGED_IN"]);
-    $session->expire(_IS_LOGGED_IN => '+10m');
+    $session->expire(_IS_LOGGED_IN => '+1h');
     $session->param('_EMAIL', $email);
     $session->flush();
 

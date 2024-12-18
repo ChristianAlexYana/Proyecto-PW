@@ -81,11 +81,11 @@ print <<EOF;
         <form action="myscript.perl">
             <div class="form-group">
                 <label for="nombre">Nombre:</label>
-                <input type="text" class="form-control" id="nombre" placeholder="Ingrese el nombre de la mascota" name="nombre">
+                <input type="text" class="form-control" id="nombre" placeholder="Ingrese el nombre del producto" name="nombre">
             </div>
             <div class="form-group">
                 <label for="precio">Precio:</label>
-                <input type="text" class="form-control" id="precio" placeholder="Ingrese el nombre del propietario" name="precio">
+                <input type="text" class="form-control" id="precio" placeholder="Ingrese el precio" name="precio">
             </div>
             <div class="form-group">
                 <label for="tipo">Tipo:</label>
@@ -173,11 +173,11 @@ print <<EOF;
 						let nombre = \$(this).data('nombre');
 						console.log(nombre);
 
-						editarMascota(id);
+						editarProducto(id);
 					});
 					\$(".deleteBtn").on('click', function() {
 						let id = \$(this).data('id');
-						eliminarMascota(id);
+						eliminarProducto(id);
 					});
 				})
 				.fail(function(jqXHR, textStatus) {
@@ -225,7 +225,7 @@ print <<EOF;
 
 				// Recoger los datos del formulario
 				var formData = {
-					id: \$('#editForm').data('id'), // Obtener el id de la mascota a editar
+					id: \$('#editForm').data('id'), // Obtener el id del producto a editar
 					nombre: \$('#editNombre').val(),
 					precio: \$('#editPrecio').val(),
 					tipo: \$('#editTipo').val(),
@@ -234,7 +234,7 @@ print <<EOF;
 
 				// Enviar la solicitud AJAX para actualizar los datos
 				\$.ajax({
-					url: "/cgi-bin/controller/productos/update.perl", // Archivo Perl que actualiza la mascota en la base de datos
+					url: "/cgi-bin/controller/productos/update.perl", // Archivo Perl que actualiza el producto en la base de datos
 					type: "POST",
 					data: formData,
 					dataType: "json",
@@ -254,9 +254,9 @@ print <<EOF;
 			});
 
 			// eliminar
-			function eliminarMascota(id) {
+			function eliminarProducto(id) {
 				console.log("id", id);
-				if (confirm("¿Estás seguro de que deseas eliminar esta mascota?")) {
+				if (confirm("¿Estás seguro de que deseas eliminar esta producto?")) {
 					var request = \$.ajax({
 						url: "/cgi-bin/controller/productos/delete.perl", // El archivo Perl para eliminar un registro
 						type: "POST",
@@ -275,10 +275,10 @@ print <<EOF;
 			}
 
 			// abrir modal
-			function editarMascota(id) {
-				// Hacer una solicitud para obtener los datos de la mascota
+			function editarProducto(id) {
+				// Hacer una solicitud para obtener los datos del producto
 				\$.ajax({
-					url: "/cgi-bin/controller/productos/findbyid.perl", // Un script que devolverá los datos de la mascota en formato JSON
+					url: "/cgi-bin/controller/productos/findbyid.perl", // Un script que devolverá los datos del producto en formato JSON
 					type: "GET",
 					data: { id: id },
 					dataType: "json",
@@ -286,7 +286,7 @@ print <<EOF;
 						if (data.error) {
 							alert("Error: " + data.error);
 						} else {
-							// Rellenar los campos del modal con los datos de la mascota
+							// Rellenar los campos del modal con los datos del producto
 							\$('#editNombre').val(data.nombre);
 							\$('#editPrecio').val(data.precio);
 							\$('#editTipo').val(data.tipo);
@@ -310,3 +310,4 @@ print <<EOF;
 </html>
 
 EOF
+
