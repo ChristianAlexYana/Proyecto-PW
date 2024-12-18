@@ -2065,7 +2065,7 @@ INSERT INTO compras (email, producto_id) VALUES
 
 ![Base de Datos y Tablas](./imagenBD/TablasGeneral.jpg)
 ![Tablas de Compras y Productos](./imagenBD/ComprasProductos.jpg)
-![Tabla de Usuarios](./imagenDB/Usuarios.jpg)
+![Tabla de Usuarios](./imagenBD/Usuarios.jpg)
 
 #
 
