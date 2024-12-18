@@ -91,11 +91,18 @@ repositorio en GitHub (Usamos el de Christian Alexander Yana Huanca)
 #
 
 ## Video Youtube Proyecto Final
-- Creamos un nuevo proyecto en GitHub
-    - https://github.com/ChristianAlexYana/Proyecto-PW.git
+- Se crea un solo video donde se muestra todas las funcionalidaes del proyecto
+ - 00:00 inicio  [![Imagen](./imagenes/imagen.jpg)](https://www.youtube.com/watch?v=axf8S4xFhCI)
+ - 00:48 Registrarse   [![Imagen](./imagenes/imagen.jpg)](https://youtu.be/axf8S4xFhCI?t=48)
+ - 01:12 Iniciar Sesión  [![Imagen](./imagenes/imagen.jpg)](https://youtu.be/axf8S4xFhCI?t=72)
+ - 01:40 Quienes Somos  [![Imagen](./imagenes/imagen.jpg)](https://youtu.be/axf8S4xFhCI?t=100)
+ - 02:18 Productos  [![Imagen](./imagenes/imagen.jpg)](https://youtu.be/axf8S4xFhCI?t=139)
+ - 03:37 Compras  [![Imagen](./imagenes/imagen.jpg)](https://youtu.be/axf8S4xFhCI?t=217)
+ - 04:08 Pago  [![Imagen](./imagenes/imagen.jpg)](https://youtu.be/axf8S4xFhCI?t=248)
+
 #
 
-## PROCESO
+## PROCESO DEL PROYECTO
 - crud-scripts/controller/compras/create.perl
 
 Captura los parámetros email y producto_id enviados desde un formulario web utilizando el módulo CGI, y valida que ambos campos estén presentes. Si falta alguno, devuelve un mensaje de error en formato JSON. Luego, se conecta a una base de datos MariaDB usando DBI, prepara e intenta ejecutar una consulta SQL para insertar los datos en la tabla compras. Si la inserción es exitosa, responde con un mensaje de éxito en formato JSON, y si ocurre algún error durante la conexión o la ejecución, devuelve el error correspondiente. Finalmente, desconecta la base de datos.
@@ -1925,7 +1932,11 @@ EOF
 ```
 #
 
-## REFERENCIAS
+## CONCLUSIONES
+
+#
+
+## RECOMENDACIONES
 
 #
 
