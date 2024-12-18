@@ -737,7 +737,1010 @@ $dbh->disconnect();
 
 ```
 
-- crud-scripts/controller/productos/create.perl
+- crud-scripts/controller/view/private/compras.perl
+
+Autentifica a los usuarios mediante sesiones. Verifica si el usuario está logueado; si no lo está, redirige a la página de inicio de sesión. Si el usuario está logueado, muestra la interfaz de la tienda con el correo del usuario en el encabezado y un carrito de compras. El código permite al usuario cerrar sesión, lo que borra la sesión y lo redirige al inicio de sesión. Además, incluye una funcionalidad para cargar dinámicamente el contenido del carrito de compras a través de una llamada AJAX a un script Perl, mostrando los productos, el total y un botón para proceder al pago. Al hacer clic en el botón de pago, muestra un modal de éxito.
+
+```bash
+#!/usr/bin/perl
+use strict;
+use warnings;
+use CGI;
+use CGI::Session;
+
+# Crear el objeto CGI
+my $cgi = CGI->new();
+
+# Crear una nueva sesión o recuperar la sesión existente
+my $session = CGI::Session->load("driver:File", $cgi->cookie('SESSION_ID') || undef , {Directory => '/usr/local/apache2/cgi-bin/controller/tmp'});
+
+# Verificar si el parámetro 'logout' fue enviado (botón de cerrar sesión)
+#
+
+if (!$session || !$session->param('_EMAIL')) {
+    # Si la sesión ha expirado o está vacía, destruirla y redirigir al login
+    print $cgi->redirect(-uri => '/cgi-bin/view/public/login.perl');
+    exit;
+}
+
+if ($session->is_expired || $session->is_empty) {
+    # Si la sesión ha expirado o está vacía, destruirla y redirigir al login
+    $session->delete();
+    $session->flush();
+    print $cgi->redirect(-uri => '/cgi-bin/view/public/login.perl');
+    exit;
+}
+
+
+if ($cgi->param('logout')) {
+    # Borrar la sesión y redirigir a la página principal
+    $session->delete();
+    $session->flush();
+    my $cookie = $cgi->cookie(-name => 'SESSION_ID', -value => '', -expires => '-1d');
+    print $cgi->redirect(-uri => '/cgi-bin/view/public/login.perl', -cookie => $cookie);
+    exit;
+}
+
+# Verificar si el parámetro '_EMAIL' está presente en la sesión
+if ($session->param('_EMAIL')) {
+    # Si el usuario está logueado, mostrar la tienda con el correo en el header
+    my $email = $session->param('_EMAIL');
+    print $cgi->header('text/html');
+    print <<HTML;
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tienda</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+</head>
+<body>
+    <nav class="navbar navbar-inverse">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="#">Mi Tienda</a>
+            </div>
+	    <ul class="nav navbar-nav">
+                <li><a href="quienes-somos.perl">Quienes somos?</a></li>
+                <li><a href="productos.perl">Productos</a></li>
+                <li><a href="tienda.perl">Tienda</a></li>
+                <li><a href="compras.perl">Compras</a></li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+                <li><a href="#"><span class="glyphicon glyphicon-user"></span> $email</a></li>
+                <li>
+                    <form method="post" style="display:inline;">
+                        <button type="submit" name="logout" class="btn btn-link navbar-btn">Cerrar sesion</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    <div class="container">
+    <h1 class="text-center">Tu Carrito de Compras</h1>
+
+    <div class="row">
+        <div class="col-md-8">
+
+        <div id="table-container">
+            <!-- Aquí se insertará la tabla dinámicamente -->
+        </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="border p-3">
+                <h4 class="text-center">Resumen del Carrito</h4>
+                <p><strong>Total:</strong> <p id="total-container"></p></p>
+                <button class="btn btn-success w-100" id="proceed-payment">Proceder al Pago</button>
+            </div>
+        </div>
+		
+	<div class="modal fade" id="paymentModal" tabindex="-1" role="dialog" aria-labelledby="paymentModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="paymentModalLabel">Pago Exitoso</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                Pago realizado con éxito.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+    </div>
+    </div>
+
+    <script>
+    document.getElementById("proceed-payment").addEventListener("click", function() {
+        // Muestra el mensaje de éxito y oculta el botón
+	        \$('#paymentModal').modal('show');
+    });
+		\$(document).ready(function() {
+			function cargarTabla() {
+				\$.ajax({
+					url: "/cgi-bin/controller/compras/read.perl", // Archivo Perl que devuelve los registros en formato JSON
+					type: "GET",
+					dataType: "json"
+				})
+				.done(function(dataset) {
+					// Generar tabla dinámica
+					let table = "";
+					console.log(dataset.data);
+					dataset.data.forEach(function(record) {
+					table += "<div class='cart-item'><div class='row'>"
+					table += "<div class='col-2'><img src='"+record.url+"' alt='Producto 1' width='100', height='100'></div>"
+					table += "<div class='col-6'><h5>"+record.nombre+"</h5></div>"
+					table += "<div class='col-2'><p>s/"+record.precio+"</p></div>"
+					table += "</div></div>"
+					});
+					let preciototal = ""+dataset.suma;
+
+					// Insertar la tabla en el contenedor
+					\$("#table-container").html(table);
+					\$("#total-container").html(preciototal);
+					\$(".comprarBtn").on('click', function() {
+						let id = \$(this).data('id');
+
+
+					var dt = {
+						email: '$email',
+						producto_id: id,
+					};
+					var request = \$.ajax({
+						url: "/cgi-bin/controller/compras/create.perl",
+						type: "POST",
+						data: dt,
+						dataType: "json"
+					});
+					request.done(function(dataset) {
+						\$('#respAjax').addClass("well");
+						\$('#respAjax').html("Datos enviados correctamente: " + JSON.stringify(dataset));
+						cargarTabla();
+					});
+					request.fail(function(jqXHR, textStatus) {
+						alert("Error en la solicitud: " + textStatus);
+					});
+
+
+
+					});
+					\$(".deleteBtn").on('click', function() {
+						let id = \$(this).data('id');
+<<<<<<< HEAD
+						eliminarMascota(id);
+=======
+						eliminarProducto(id);
+>>>>>>> LimbergSarmiento
+					});
+				})
+				.fail(function(jqXHR, textStatus) {
+					\$("#table-container").html("<div class='alert alert-danger'>Error al cargar los datos: " + textStatus + "</div>");
+				});
+			}
+
+			cargarTabla();
+			})
+    </script>
+</body>
+</html>
+HTML
+} else {
+    # Si el usuario no está logueado, mostrar mensaje de no logueado
+    print $cgi->header('text/html');
+    print <<HTML;
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>No logueado</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1>No estás logueado</h1>
+        <p><a href="login.pl" class="btn btn-primary">Iniciar sesión</a></p>
+    </div>
+</body>
+</html>
+HTML
+}
+```
+
+- crud-scripts/controller/view/private/productos.perl
+
+Gestiona productos en una tienda online. Verifica la autenticación del usuario mediante sesiones, mostrando un formulario para registrar productos y una tabla dinámica que se actualiza con datos obtenidos a través de AJAX. Los productos se pueden editar o eliminar mediante modales y botones interactivos. 
+
+```bash
+#!/usr/bin/perl
+use strict;
+use warnings;
+
+use CGI;
+use CGI::Session;
+
+# Crear el objeto CGI
+my $cgi = CGI->new();
+
+# Crear una nueva sesión o recuperar la sesión existente
+my $session = CGI::Session->load("driver:File", $cgi->cookie('SESSION_ID') || undef , {Directory => '/usr/local/apache2/cgi-bin/controller/tmp'});
+
+# Verificar si el parámetro 'logout' fue enviado (botón de cerrar sesión)
+#
+
+if (!$session || !$session->param('_EMAIL')) {
+    # Si la sesión ha expirado o está vacía, destruirla y redirigir al login
+    print $cgi->redirect(-uri => '/cgi-bin/view/public/login.perl');
+    exit;
+}
+
+if ($session->is_expired || $session->is_empty) {
+    # Si la sesión ha expirado o está vacía, destruirla y redirigir al login
+    $session->delete();
+    $session->flush();
+    print $cgi->redirect(-uri => '/cgi-bin/view/public/login.perl');
+    exit;
+}
+
+
+if ($cgi->param('logout')) {
+    # Borrar la sesión y redirigir a la página principal
+    $session->delete();
+    $session->flush();
+    my $cookie = $cgi->cookie(-name => 'SESSION_ID', -value => '', -expires => '-1d');
+    print $cgi->redirect(-uri => '/cgi-bin/view/public/login.perl', -cookie => $cookie);
+    exit;
+}
+
+
+my $email = $session->param('_EMAIL');
+# Imprimir cabecera HTTP válida
+print "Content-type: text/html\n\n";
+
+print <<EOF;
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <title>Formulario de Productos</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+</head>
+<body>
+    <nav class="navbar navbar-inverse">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="#">Mi Tienda</a>
+            </div>
+	    <ul class="nav navbar-nav">
+                <li><a href="quienes-somos.perl">Quienes somos?</a></li>
+                <li><a href="productos.perl">Productos</a></li>
+                <li><a href="tienda.perl">Tienda</a></li>
+                <li><a href="compras.perl">Compras</a></li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+                <li><a href="#"><span class="glyphicon glyphicon-user"></span> $email</a></li>
+                <li>
+                    <form method="post" style="display:inline;">
+                        <button type="submit" name="logout" class="btn btn-link navbar-btn">Cerrar sesion</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    <div class="container">
+        <h2>Formulario de Registro de Productos</h2>
+        <form action="myscript.perl">
+            <div class="form-group">
+                <label for="nombre">Nombre:</label>
+<<<<<<< HEAD
+                <input type="text" class="form-control" id="nombre" placeholder="Ingrese el nombre de la mascota" name="nombre">
+            </div>
+            <div class="form-group">
+                <label for="precio">Precio:</label>
+                <input type="text" class="form-control" id="precio" placeholder="Ingrese el nombre del propietario" name="precio">
+=======
+                <input type="text" class="form-control" id="nombre" placeholder="Ingrese el nombre del producto" name="nombre">
+            </div>
+            <div class="form-group">
+                <label for="precio">Precio:</label>
+                <input type="text" class="form-control" id="precio" placeholder="Ingrese el precio" name="precio">
+>>>>>>> LimbergSarmiento
+            </div>
+            <div class="form-group">
+                <label for="tipo">Tipo:</label>
+                <input type="text" class="form-control" id="tipo" placeholder="Ingrese tipo" name="tipo">
+            </div>
+            <div class="form-group">
+                <label for="url">Url:</label>
+                <input type="text" class="form-control" id="url" placeholder="Ingrese url" name="url">
+            </div>
+            <div class="form-group">
+                <div id="respAjax" class=""></div>
+            </div>
+            <button id="submitAJAX" class="btn_submit btn btn-default">Registrar</button>
+        </form>
+        <h3>Lista de Productos Registradas</h3>
+        <div id="table-container">
+            <!-- Aquí se insertará la tabla dinámicamente -->
+        </div>
+        <div id="editModal" class="modal fade" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title">Editar Producto</h4>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editForm">
+                            <div class="form-group">
+                                <label for="editNombre">Nombre:</label>
+                                <input type="text" class="form-control" id="editNombre" name="nombre">
+                            </div>
+                            <div class="form-group">
+                                <label for="editPrecio">Precio:</label>
+                                <input type="text" class="form-control" id="editPrecio" name="precio">
+                            </div>
+                            <div class="form-group">
+                                <label for="editTipo">Tipo:</label>
+                                <input type="text" class="form-control" id="editTipo" name="tipo">
+                            </div>
+                            <div class="form-group">
+                                <label for="editUrl">Url:</label>
+                                <input type="text" class="form-control" id="editUrl" name="url">
+                            </div>
+                            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+	<script>
+		\$(document).ready(function() {
+			function cargarTabla() {
+				\$.ajax({
+					url: "/cgi-bin/controller/productos/read.perl", // Archivo Perl que devuelve los registros en formato JSON
+					type: "GET",
+					dataType: "json"
+				})
+				.done(function(dataset) {
+					// Generar tabla dinámica
+					let table = "<table class='table table-bordered'><thead><tr><th>ID</th><th>Nombre</th><th>Precio</th><th>Url</th><th>Tipo</th><th>Acciones</th></tr></thead><tbody>";
+					console.log(dataset.data);
+					dataset.data.forEach(function(record) {
+						console.log(record.id);
+						table += "<tr>";
+						table += "<td>"+record.id+"</td>";
+						table += "<td>"+record.nombre+"</td>";
+						table += "<td>"+record.precio+"</td>";
+						table += "<td>"+record.tipo+"</td>";
+						table += "<td>"+record.url+"</td>";
+						table += "<td><button class='btn btn-info btn-sm editBtn' data-id='" + record.id + "'>Editar</button>";
+						table += " <button class='btn btn-danger btn-sm deleteBtn' data-id='" + record.id + "'>Eliminar</button></td>";
+						table += "</tr>";
+					});
+					table += "</tbody></table>";
+
+					// Insertar la tabla en el contenedor
+					\$("#table-container").html(table);
+					\$(".editBtn").on('click', function() {
+						console.log("hola");
+						let id = \$(this).data('id');
+						let nombre = \$(this).data('nombre');
+						console.log(nombre);
+
+<<<<<<< HEAD
+						editarMascota(id);
+					});
+					\$(".deleteBtn").on('click', function() {
+						let id = \$(this).data('id');
+						eliminarMascota(id);
+=======
+						editarProducto(id);
+					});
+					\$(".deleteBtn").on('click', function() {
+						let id = \$(this).data('id');
+						eliminarProducto(id);
+>>>>>>> LimbergSarmiento
+					});
+				})
+				.fail(function(jqXHR, textStatus) {
+					\$("#table-container").html("<div class='alert alert-danger'>Error al cargar los datos: " + textStatus + "</div>");
+				});
+			}
+
+			cargarTabla();
+
+			// Crear
+			\$('.btn_submit').on('click', function(e) {
+				var objectEvent = \$(this);
+				if (objectEvent.attr('id') === 'submitNoAJAX') {
+					\$('form').attr('action', 'myscript.perl');
+					return true;
+				}
+				e.preventDefault();
+				if (objectEvent.attr('id') === 'submitAJAX') {
+					var dt = {
+						nombre: \$("#nombre").val(),
+						precio: \$("#precio").val(),
+						tipo: \$("#tipo").val(),
+						url: \$("#url").val(),
+					};
+					var request = \$.ajax({
+						url: "/cgi-bin/controller/productos/create.perl",
+						type: "POST",
+						data: dt,
+						dataType: "json"
+					});
+					request.done(function(dataset) {
+						\$('#respAjax').addClass("well");
+						\$('#respAjax').html("Datos enviados correctamente: " + JSON.stringify(dataset));
+						cargarTabla();
+					});
+					request.fail(function(jqXHR, textStatus) {
+						alert("Error en la solicitud: " + textStatus);
+					});
+				}
+			});
+
+			// actualizar
+			\$('#editForm').on('submit', function(e) {
+				e.preventDefault(); // Evitar el comportamiento por defecto del formulario
+
+				// Recoger los datos del formulario
+				var formData = {
+<<<<<<< HEAD
+					id: \$('#editForm').data('id'), // Obtener el id de la mascota a editar
+=======
+					id: \$('#editForm').data('id'), // Obtener el id del producto a editar
+>>>>>>> LimbergSarmiento
+					nombre: \$('#editNombre').val(),
+					precio: \$('#editPrecio').val(),
+					tipo: \$('#editTipo').val(),
+					url: \$('#editUrl').val(),
+				};
+
+				// Enviar la solicitud AJAX para actualizar los datos
+				\$.ajax({
+<<<<<<< HEAD
+					url: "/cgi-bin/controller/productos/update.perl", // Archivo Perl que actualiza la mascota en la base de datos
+=======
+					url: "/cgi-bin/controller/productos/update.perl", // Archivo Perl que actualiza el producto en la base de datos
+>>>>>>> LimbergSarmiento
+					type: "POST",
+					data: formData,
+					dataType: "json",
+					success: function(response) {
+						if (response.error) {
+							alert("Error: " + response.error);
+						} else {
+							// Cerrar el modal y recargar la tabla
+							\$('#editModal').modal('hide');
+							cargarTabla();
+						}
+					},
+					error: function(jqXHR, textStatus) {
+						alert("Error en la solicitud: " + textStatus);
+					}
+				});
+			});
+
+			// eliminar
+<<<<<<< HEAD
+			function eliminarMascota(id) {
+				console.log("id", id);
+				if (confirm("¿Estás seguro de que deseas eliminar esta mascota?")) {
+=======
+			function eliminarProducto(id) {
+				console.log("id", id);
+				if (confirm("¿Estás seguro de que deseas eliminar esta producto?")) {
+>>>>>>> LimbergSarmiento
+					var request = \$.ajax({
+						url: "/cgi-bin/controller/productos/delete.perl", // El archivo Perl para eliminar un registro
+						type: "POST",
+						data: { id: id },
+						dataType: "json",
+					});
+					request.done(function() {
+						\$('#respAjax').addClass("well");
+						\$('#respAjax').html("Dato eliminado");
+						cargarTabla();
+					});
+					request.fail(function(jqXHR, textStatus) {
+						alert("Error en la solicitud: " + textStatus);
+					});
+				}
+			}
+
+			// abrir modal
+<<<<<<< HEAD
+			function editarMascota(id) {
+				// Hacer una solicitud para obtener los datos de la mascota
+				\$.ajax({
+					url: "/cgi-bin/controller/productos/findbyid.perl", // Un script que devolverá los datos de la mascota en formato JSON
+=======
+			function editarProducto(id) {
+				// Hacer una solicitud para obtener los datos del producto
+				\$.ajax({
+					url: "/cgi-bin/controller/productos/findbyid.perl", // Un script que devolverá los datos del producto en formato JSON
+>>>>>>> LimbergSarmiento
+					type: "GET",
+					data: { id: id },
+					dataType: "json",
+					success: function(data) {
+						if (data.error) {
+							alert("Error: " + data.error);
+						} else {
+<<<<<<< HEAD
+							// Rellenar los campos del modal con los datos de la mascota
+=======
+							// Rellenar los campos del modal con los datos del producto
+>>>>>>> LimbergSarmiento
+							\$('#editNombre').val(data.nombre);
+							\$('#editPrecio').val(data.precio);
+							\$('#editTipo').val(data.tipo);
+							\$('#editUrl').val(data.url);
+							\$('#editForm').data('id', id); // Guardar el id en el formulario
+
+							// Mostrar el modal
+							\$('#editModal').modal('show');
+						}
+					},
+					error: function(jqXHR, textStatus) {
+						alert("Error al obtener los datos: " + textStatus);
+					}
+				});
+			}
+
+			
+		});
+	</script>
+</body>
+</html>
+
+EOF
+<<<<<<< HEAD
+=======
+
+>>>>>>> LimbergSarmiento
+```
+
+- crud-scripts/controller/view/private/quienes-somos.perl.perl
+
+Si el usuario está autenticado, se muestra una página con información sobre la tienda y un menú de navegación, incluyendo su correo electrónico y un botón para cerrar sesión. Si el usuario no está logueado, se muestra un mensaje indicándole que debe iniciar sesión. También incluye medidas para manejar la expiración de la sesión y redirigir al login en caso de que sea necesario.
+
+```bash
+#!/usr/bin/perl
+use strict;
+use warnings;
+use CGI;
+use CGI::Session;
+
+# Crear el objeto CGI
+my $cgi = CGI->new();
+
+# Crear una nueva sesión o recuperar la sesión existente
+my $session = CGI::Session->load("driver:File", $cgi->cookie('SESSION_ID') || undef , {Directory => '/usr/local/apache2/cgi-bin/controller/tmp'});
+
+# Verificar si el parámetro 'logout' fue enviado (botón de cerrar sesión)
+#
+
+if (!$session || !$session->param('_EMAIL')) {
+    # Si la sesión ha expirado o está vacía, destruirla y redirigir al login
+    print $cgi->redirect(-uri => '/cgi-bin/view/public/login.perl');
+    exit;
+}
+
+if ($session->is_expired || $session->is_empty) {
+    # Si la sesión ha expirado o está vacía, destruirla y redirigir al login
+    $session->delete();
+    $session->flush();
+    print $cgi->redirect(-uri => '/cgi-bin/view/public/login.perl');
+    exit;
+}
+
+
+if ($cgi->param('logout')) {
+    # Borrar la sesión y redirigir a la página principal
+    $session->delete();
+    $session->flush();
+    my $cookie = $cgi->cookie(-name => 'SESSION_ID', -value => '', -expires => '-1d');
+    print $cgi->redirect(-uri => '/cgi-bin/view/public/login.perl', -cookie => $cookie);
+    exit;
+}
+
+# Verificar si el parámetro '_EMAIL' está presente en la sesión
+if ($session->param('_EMAIL')) {
+    # Si el usuario está logueado, mostrar la tienda con el correo en el header
+    my $email = $session->param('_EMAIL');
+    print $cgi->header(
+	    -type => 'text/html; charset=UTF-8', 
+	    -charset => 'UTF-8'
+    );
+    print <<HTML;
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Tienda Virtual</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Arial', sans-serif;
+        }
+        .navbar {
+            margin-bottom: 30px;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        h2 {
+            color: #007bff;
+            font-weight: bold;
+        }
+        p {
+            font-size: 1.1em;
+            line-height: 1.6;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-inverse">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="#">Mi Tienda</a>
+            </div>
+            <ul class="nav navbar-nav">
+                <li><a href="quienes-somos.perl">¿Quiénes somos?</a></li>
+                <li><a href="productos.perl">Productos</a></li>
+                <li><a href="tienda.perl">Tienda</a></li>
+                <li><a href="compras.perl">Compras</a></li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+                <li><a href="#"><span class="glyphicon glyphicon-user"></span> $email</a></li>
+                <li>
+                    <form method="post" style="display:inline;">
+                        <button type="submit" name="logout" class="btn btn-link navbar-btn">Cerrar sesión</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h2>Bienvenidos a nuestra Tienda Virtual</h2>
+        <p>En nuestra tienda virtual encontrarás una amplia variedad de productos diseñados para satisfacer todas tus necesidades y gustos. Contamos con una extensa selección de artículos, desde tecnología de última generación, como teléfonos inteligentes, laptops, y gadgets innovadores, hasta muebles modernos y funcionales que transformarán tu hogar. También ofrecemos una gran variedad de productos electrónicos para que disfrutes de lo mejor en entretenimiento y tecnología para tu vida diaria.</p>
+        <p>Ya sea que estés buscando un regalo perfecto, una actualización para tu hogar, o simplemente quieras darte un capricho, tenemos lo que necesitas. Nos esforzamos por ofrecerte los mejores productos a precios competitivos, con envío rápido y seguro para que tu experiencia de compra sea lo más conveniente posible.</p>
+        <p><strong>¡Explora nuestras categorías y encuentra lo que buscas con facilidad!</strong> Navega por nuestra tienda, descubre promociones exclusivas, y aprovecha la comodidad de comprar desde donde quieras, cuando quieras. Tu satisfacción es nuestra prioridad, por lo que siempre estamos atentos a brindarte un excelente servicio.</p>
+    </div>
+</body>
+</html>
+
+HTML
+} else {
+    # Si el usuario no está logueado, mostrar mensaje de no logueado
+    print $cgi->header('text/html');
+    print <<HTML;
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>No logueado</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1>No estás logueado</h1>
+        <p><a href="login.pl" class="btn btn-primary">Iniciar sesión</a></p>
+    </div>
+</body>
+</html>
+HTML
+}
+```
+- crud-scripts/controller/view/private/tienda.perl
+
+Los usuarios deben estar logueados para acceder a su contenido. Si el usuario está autenticado, se muestra una página con el correo electrónico del usuario en la barra de navegación y un listado dinámico de productos extraídos mediante AJAX desde un archivo Perl. Los productos se presentan con detalles como nombre, precio y tipo, y los usuarios pueden hacer clic en un botón para "comprar" un producto, lo que genera una solicitud para agregarlo a la compra. Si el usuario no está logueado, se redirige a la página de inicio de sesión. Además, si el usuario decide cerrar sesión, se elimina la sesión y se redirige al login.
+
+```bash
+#!/usr/bin/perl
+use strict;
+use warnings;
+use CGI;
+use CGI::Session;
+
+# Crear el objeto CGI
+my $cgi = CGI->new();
+
+# Crear una nueva sesión o recuperar la sesión existente
+my $session = CGI::Session->load("driver:File", $cgi->cookie('SESSION_ID') || undef , {Directory => '/usr/local/apache2/cgi-bin/controller/tmp'});
+
+# Verificar si el parámetro 'logout' fue enviado (botón de cerrar sesión)
+<<<<<<< HEAD
+#
+
+=======
+if ($cgi->param('logout')) {
+    # Borrar la sesión y redirigir a la página de login
+    $session->delete();
+    $session->flush();
+    print $cgi->redirect(-uri => '/cgi-bin/view/public/login.perl');
+    exit;
+}
+
+# Verificar si la sesión es válida
+>>>>>>> LimbergSarmiento
+if (!$session || !$session->param('_EMAIL')) {
+    # Si la sesión ha expirado o está vacía, destruirla y redirigir al login
+    print $cgi->redirect(-uri => '/cgi-bin/view/public/login.perl');
+    exit;
+}
+
+if ($session->is_expired || $session->is_empty) {
+    # Si la sesión ha expirado o está vacía, destruirla y redirigir al login
+    $session->delete();
+    $session->flush();
+    print $cgi->redirect(-uri => '/cgi-bin/view/public/login.perl');
+    exit;
+}
+
+<<<<<<< HEAD
+
+if ($cgi->param('logout')) {
+    # Borrar la sesión y redirigir a la página principal
+    $session->delete();
+    $session->flush();
+    print $cgi->redirect(-uri => '/cgi-bin/view/public/login.perl');
+    exit;
+}
+
+# Verificar si el parámetro '_EMAIL' está presente en la sesión
+if ($session->param('_EMAIL')) {
+    # Si el usuario está logueado, mostrar la tienda con el correo en el header
+=======
+# Verificar si el parámetro '_EMAIL' está presente en la sesión
+if ($session->param('_EMAIL')) {
+>>>>>>> LimbergSarmiento
+    my $email = $session->param('_EMAIL');
+    print $cgi->header('text/html');
+    print <<HTML;
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tienda</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+</head>
+<body>
+    <nav class="navbar navbar-inverse">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="#">Mi Tienda</a>
+            </div>
+<<<<<<< HEAD
+	    <ul class="nav navbar-nav">
+=======
+            <ul class="nav navbar-nav">
+>>>>>>> LimbergSarmiento
+                <li><a href="quienes-somos.perl">Quienes somos?</a></li>
+                <li><a href="productos.perl">Productos</a></li>
+                <li><a href="tienda.perl">Tienda</a></li>
+                <li><a href="compras.perl">Compras</a></li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+                <li><a href="#"><span class="glyphicon glyphicon-user"></span> $email</a></li>
+                <li>
+                    <form method="post" style="display:inline;">
+<<<<<<< HEAD
+                        <button type="submit" name="logout" class="btn btn-link navbar-btn">Cerrar sesion</button>
+=======
+                        <button type="submit" name="logout" class="btn btn-link navbar-btn">Cerrar sesión</button>
+>>>>>>> LimbergSarmiento
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    <div class="container">
+<<<<<<< HEAD
+        <h1>Bienvenido a la tienda</h1>
+=======
+        <h1>Bienvenido a la tienda virtual</h1>
+>>>>>>> LimbergSarmiento
+
+        <div class="row" id="table-container">
+            <!-- Aquí se insertará la tabla dinámicamente -->
+        </div>
+    </div>
+    <script>
+<<<<<<< HEAD
+		\$(document).ready(function() {
+			function cargarTabla() {
+				\$.ajax({
+					url: "/cgi-bin/controller/productos/read.perl", // Archivo Perl que devuelve los registros en formato JSON
+					type: "GET",
+					dataType: "json"
+				})
+				.done(function(dataset) {
+					// Generar tabla dinámica
+					let table = "";
+					console.log(dataset.data);
+					dataset.data.forEach(function(record) {
+            					table += "<div class='col-sm-4'><div class='thumbnail'>"
+                    				table += "<img src='"+record.url+ "' alt='Producto 3'  height='250'>"
+                        			table += "<h3>"+record.nombre+"</h3>"
+                        			table += "<p>precio "+record.precio+"</p>"
+                        			table += "<p>tipo: "+record.tipo+"</p>"
+                        			table += "<p><a href='#' class='btn btn-primary comprarBtn' role='button' data-id='" + record.id + "'>Comprar</a></p>"
+            					table += "</div></div>"
+					});
+
+					// Insertar la tabla en el contenedor
+					\$("#table-container").html(table);
+					\$(".comprarBtn").on('click', function() {
+						let id = \$(this).data('id');
+
+
+					var dt = {
+						email: '$email',
+						producto_id: id,
+					};
+					var request = \$.ajax({
+						url: "/cgi-bin/controller/compras/create.perl",
+						type: "POST",
+						data: dt,
+						dataType: "json"
+					});
+					request.done(function(dataset) {
+						\$('#respAjax').addClass("well");
+						\$('#respAjax').html("Datos enviados correctamente: " + JSON.stringify(dataset));
+						cargarTabla();
+					});
+					request.fail(function(jqXHR, textStatus) {
+						alert("Error en la solicitud: " + textStatus);
+					});
+
+
+
+					});
+					\$(".deleteBtn").on('click', function() {
+						let id = \$(this).data('id');
+						eliminarMascota(id);
+					});
+				})
+				.fail(function(jqXHR, textStatus) {
+					\$("#table-container").html("<div class='alert alert-danger'>Error al cargar los datos: " + textStatus + "</div>");
+				});
+			}
+
+			cargarTabla();
+			})
+=======
+        \$(document).ready(function() {
+            function cargarTabla() {
+                \$.ajax({
+                    url: "/cgi-bin/controller/productos/read.perl", // Archivo Perl que devuelve los registros en formato JSON
+                    type: "GET",
+                    dataType: "json"
+                })
+                .done(function(dataset) {
+                    // Generar tabla dinámica
+                    let table = "";
+                    console.log(dataset.data);
+                    dataset.data.forEach(function(record) {
+                        table += "<div class='col-sm-4'><div class='thumbnail'>"
+                        table += "<img src='"+record.url+ "' alt='Producto 3'  height='250'>"
+                        table += "<h3>"+record.nombre+"</h3>"
+                        table += "<p>precio "+record.precio+"</p>"
+                        table += "<p>tipo: "+record.tipo+"</p>"
+                        table += "<p><a href='#' class='btn btn-primary comprarBtn' role='button' data-id='" + record.id + "'>Comprar</a></p>"
+                        table += "</div></div>"
+                    });
+
+                    // Insertar la tabla en el contenedor
+                    \$("#table-container").html(table);
+                    \$(".comprarBtn").on('click', function() {
+                        let id = \$(this).data('id');
+                        var dt = {
+                            email: '$email',
+                            producto_id: id,
+                        };
+                        var request = \$.ajax({
+                            url: "/cgi-bin/controller/compras/create.perl",
+                            type: "POST",
+                            data: dt,
+                            dataType: "json"
+                        });
+                        request.done(function(dataset) {
+                            \$('#respAjax').addClass("well");
+                            \$('#respAjax').html("Datos enviados correctamente: " + JSON.stringify(dataset));
+                            cargarTabla();
+                        });
+                        request.fail(function(jqXHR, textStatus) {
+                            alert("Error en la solicitud: " + textStatus);
+                        });
+                    });
+                })
+                .fail(function(jqXHR, textStatus) {
+                    \$("#table-container").html("<div class='alert alert-danger'>Error al cargar los datos: " + textStatus + "</div>");
+                });
+            }
+
+            cargarTabla();
+        })
+>>>>>>> LimbergSarmiento
+    </script>
+</body>
+</html>
+HTML
+<<<<<<< HEAD
+} else {
+    # Si el usuario no está logueado, mostrar mensaje de no logueado
+    print $cgi->header('text/html');
+    print <<HTML;
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>No logueado</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1>No estás logueado</h1>
+        <p><a href="login.pl" class="btn btn-primary">Iniciar sesión</a></p>
+    </div>
+</body>
+</html>
+HTML
+}
+=======
+} 
+>>>>>>> LimbergSarmiento
+```
+- crud-scripts/controller/view/public/login.perl
+
+
+
+```bash
+
+```
+- crud-scripts/controller/view/public/registro.perl
 
 
 
