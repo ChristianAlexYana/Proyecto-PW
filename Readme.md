@@ -90,6 +90,11 @@ repositorio en GitHub (Usamos el de Christian Alexander Yana Huanca)
     - https://github.com/ChristianAlexYana/Proyecto-PW.git
 #
 
+## DESCRIPCION DE LA APLICACION
+
+Este proyecto es una aplicación web desarrollada en Perl, que permite la gestión de usuarios y productos en una tienda en línea. Utiliza CGI para interactuar con los usuarios a través de formularios dinámicos. Los usuarios pueden registrarse, iniciar sesión, ver productos, realizar compras y cerrar sesión. La autenticación se maneja mediante sesiones en el servidor, asegurando que solo los usuarios logueados puedan acceder a áreas protegidas del sistema. Los formularios de inicio de sesión y registro se validan de manera asíncrona mediante AJAX, mejorando la experiencia del usuario al evitar recargas innecesarias de la página. Además, la visualización de productos y el proceso de compra también se gestionan dinámicamente con AJAX. El sistema está diseñado para ser seguro y fácil de usar, proporcionando una interfaz amigable y una funcionalidad robusta para los usuarios.
+
+#
 ## Video Youtube Proyecto Final
 - Se crea un solo video donde se muestra todas las funcionalidaes del proyecto
  - 00:00 [![inicio](./imagenVideos/inicio.jpg)](https://www.youtube.com/watch?v=axf8S4xFhCI)
@@ -1930,14 +1935,155 @@ print <<EOF;
 </html>
 EOF
 ```
+- conf/httpd-cgi.conf
+
+Apache habilita y configura el uso de scripts CGI en el servidor web. Carga el módulo cgi_module, establece el directorio /usr/local/apache2/cgi-bin/ como el lugar donde se encuentran los scripts CGI, y permite ejecutar archivos con extensiones .cgi, .pl y .perl como scripts CGI.
+
+```bash
+LoadModule cgi_module modules/mod_cgi.so 
+ScriptAlias /cgi-bin/ "/usr/local/apache2/cgi-bin/"
+<Directory "/usr/local/apache2/cgi-bin">
+    AllowOverride None
+    Options +ExecCGI -MultiViews +SymLinksIfOwnerMatch
+    Require all granted
+</Directory>
+
+# Habilitar CGI para archivos .perl
+AddHandler cgi-script .cgi .pl .perl
+ 
+```
+- docker-compose.yml
+
+Define dos servicios: crud y dbpets. El servicio crud construye una imagen desde el directorio actual y la expone en el puerto 8090 del host, mientras que el servicio dbpets usa una imagen de MySQL, configura la base de datos con una contraseña y un nombre de base de datos, y la expone en el puerto 3306. Ambos servicios están conectados a una red de puente llamada crud-network, y el servicio dbpets está configurado para reiniciarse automáticamente.
+
+```bash
+networks:
+  crud-network:
+    driver: bridge
+services:
+  crud:
+    #image: jazzblack/crud-image:1.0.0
+    build: ./
+    container_name: crud
+    ports:
+      - '8090:80'
+    networks:
+      - crud-network
+
+  dbpets:
+    image: mysql:9.1
+    container_name: dbpets
+    restart: always
+    ports:
+      - '3306:3306'
+    environment:
+      MYSQL_ROOT_PASSWORD: admin
+      MYSQL_DATABASE: datos
+    networks:
+      - crud-network
+```
+
+- dockerfile
+
+```bash
+FROM httpd:2.4
+RUN apt-get update && \
+    apt-get install -y perl libcgi-pm-perl build-essential libmariadb-dev-compat libmariadb-dev  && \
+    rm -rf /var/lib/apt/lists/*
+
+    # Instalar módulos Perl con cpan
+RUN cpan CGI && \
+    cpan CGI::Session && \
+    cpan JSON::XS && \
+    cpan JSON && \
+    cpan DBI && \
+    cpan DBD::MariaDB
+# Copiar el script y configuración CGI
+COPY ./crud-scripts/ /usr/local/apache2/cgi-bin/
+COPY ./conf/httpd-cgi.conf /usr/local/apache2/conf/extra/
+
+# Incluir la configuración CGI en httpd.conf
+RUN echo "Include conf/extra/httpd-cgi.conf" >> /usr/local/apache2/conf/httpd.conf
+
+# Dar permisos ejecutables al script Perl
+RUN chmod -R +x /usr/local/apache2/cgi-bin/
+
+# Exponer el puerto 80
+EXPOSE 80
+
+```
+
+- datos.sql
+
+```bash
+
+-- Crear base de datos 'datos' si no existe
+CREATE DATABASE IF NOT EXISTS datos;
+USE datos;
+
+-- Crear tabla 'productos'
+CREATE TABLE IF NOT EXISTS productos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(50),
+    precio DECIMAL(10, 2),
+    tipo VARCHAR(30),
+    url VARCHAR(255)
+);
+
+-- Insertar algunos productos en la tabla 'productos'
+INSERT INTO productos (nombre, precio, tipo, url) VALUES
+    ('redmi note 9', 500.00, 'Electronico', 'https://i.ibb.co/x2Nmg4h/remi.png'),
+    ('laptop HP', 800.00, 'Electronico', 'https://i.ibb.co/sK69r2g/hplaptop.png'),
+    ('sofá de dos plazas', 300.00, 'Mobiliario', 'https://i.ibb.co/sFK1L1k/sofa.png'),
+    ('televisor 55" Samsung', 1000.00, 'Electronico', 'https://i.ibb.co/J2RtGdy/televisor.png');
+
+-- Crear tabla 'usuarios'
+CREATE TABLE IF NOT EXISTS usuarios (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(50),
+    email VARCHAR(100),
+    contrasena VARCHAR(50)
+);
+
+-- Insertar algunos usuarios principales en la tabla 'usuarios'
+INSERT INTO usuarios (nombre, email, contrasena) VALUES
+    ('Juan Perez', 'juan.perez@example.com', 'contrasena123'),
+    ('Limber', 'sarmientolimver86@gmail.com', '1234'),
+    ('Pepito', 'sarmientolissssmver87@gmail.com', 'olhvida'),
+    ('test', 'test@test.com', '1234');
+
+-- Crear tabla 'compras'
+CREATE TABLE IF NOT EXISTS compras (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(100),
+    producto_id INT,
+    FOREIGN KEY (producto_id) REFERENCES productos(id)
+);
+
+-- Insertar algunas compras en la tabla 'compras'
+INSERT INTO compras (email, producto_id) VALUES
+    ('test@test.com', 1),
+    ('juan.perez@example.com', 2),
+    ('sarmientolimver86@gmail.com', 3);
+```
+- Base de datos: datos.sql
+
+![Base de Datos y Tablas](./imagenBD/TablasGeneral.jpg)
+![Tablas de Compras y Productos](./imagenBD/ComprasProductos.jpg)
+![Tabla de Usuarios](./imagenBD/Usuarios.jpg)
+
 #
 
 ## CONCLUSIONES
-- El proyecto implementa un sistema de gestión de usuarios y compras para una tienda en línea utilizando Perl, CGI y AJAX. Los usuarios pueden registrarse, iniciar sesión y mantener su sesión activa mientras navegan por la tienda. El sistema valida las credenciales del usuario en el login y, si es correcto, lo redirige a la tienda. El formulario de registro recoge información como nombre, correo electrónico y contraseña, enviándola al servidor para crear un nuevo usuario. La tienda muestra productos dinámicamente utilizando AJAX, lo que permite cargar los datos sin recargar la página, y los usuarios pueden realizar compras, las cuales se gestionan mediante solicitudes al backend. La implementación de sesiones garantiza que solo los usuarios autenticados accedan a las funciones de compra.
+
+- El proyecto proporciona una solución funcional para la creación y gestión de una tienda en línea básica, utilizando tecnologías como Perl, CGI y AJAX para una interacción fluida. La gestión de sesiones y la validación de datos en tiempo real mejoran la experiencia del usuario, mientras que las medidas de seguridad, como la protección de rutas y la destrucción de sesiones, aseguran un manejo adecuado de la autenticación.
+
 #
 
 ## RECOMENDACIONES
-
+- Utilizar algoritmos diseñados específicamente para la seguridad de contraseñas. Los cuales están diseñados para ser lentos y difíciles de vulnerar mediante ataques de fuerza bruta.
+- Evitar almacenar las contraseñas de los usuarios en texto claro en la base de datos.
+- Tener claro que tipo de proyecto deseas realizar, hacer consultas si es necesario
 #
 
 [license]: https://img.shields.io/github/license/rescobedoq/pw2?label=rescobedoq
