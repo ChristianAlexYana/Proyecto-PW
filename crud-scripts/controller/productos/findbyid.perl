@@ -10,14 +10,6 @@ my $cgi = CGI->new();
 
 # Capturar los parámetros enviados desde el formulario
 my $id    = $cgi->param('id');
-my $nombre    = $cgi->param('nombre');
-my $tipo   = $cgi->param('tipo');
-my $precio = $cgi->param('precio');
-
-# Si no se ha proporcionado fecha de fallecimiento, establecer como NULL
-if (!$death) {
-    $death = undef;  # Asignar undef para representar NULL en la base de datos
-}
 
 # Imprimir el encabezado HTTP para devolver JSON
 print $cgi->header('application/json;charset=UTF-8');
@@ -27,27 +19,35 @@ my $dbh = DBI->connect("DBI:MariaDB:database=datos;host=dbpets;port=3306", 'root
   or die to_json({ error => "Error al conectar a la base de datos: " . DBI->errstr });
 
 # Consulta SQL para insertar los datos
-my $sql = 'UPDATE productos SET nombre = ?, tipo = ?, precio = ? WHERE id = ?';
+my $sql = 'SELECT * from productos WHERE id = ?';
 my $sth = $dbh->prepare($sql)
   or die to_json({ error => "Error al preparar la consulta: " . $dbh->errstr });
 
+  
+
 # Ejecutar la consulta
 eval {
-    $sth->execute($nombre, $tipo, $precio, $id)
+    $sth->execute($id)
       or die "Error al ejecutar la consulta: " . $sth->errstr;
 };
+
+my $row = $sth->fetchrow_hashref();
 
 if ($@) {
     print to_json({ error => "Error durante la inserción: $@" });
 } else {
-    # Respuesta JSON de éxito
+
+if ($row) {
     print to_json({
-        mensaje => "Datos actualizados exitosamente",
-        id => $id,
-        nombre    => $nombre,
-        precio    => $precio,
-        tipo    => $tipo,
+        id => $row->{id},
+        nombre => $row->{nombre},
+        tipo => $row->{tipo},
+        precio => $row->{precio},
+        url => $row->{url},
     });
+} else {
+    print to_json({ error => "Producto no encontrada" });
+}
 }
 
 # Finalizar la declaración y desconectar
