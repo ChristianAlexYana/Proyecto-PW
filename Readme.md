@@ -37,11 +37,11 @@
 <tr>
 <td>FECHA INICIO::</td><td>07-Dic-2024</td><td>FECHA FIN:</td><td>18-Dic-2024</td><td>DURACIÓN:</td><td>47 horas</td>
 </tr>
-<tr><td colspan="6">ESTUDIANTES:                           Grupo Teoria
+<tr><td colspan="6">ESTUDIANTES:GRUPO TEORIA
     <ul>
-	<h4>Mijael Paul Leon Ramos                          C</h4>
-        <h4>Limberg Sarmiento Tico                          C</h4>        
-        <h4>Christian Alexander Yana Huanca (Git-Hub)       A</h4>
+	<h4>Mijael Paul Leon Ramos:(C)</h4>
+        <h4>Limberg Sarmiento Tico:(C)</h4>        
+        <h4>Christian Alexander Yana Huanca (Git-Hub):(A)</h4>
     </ul>
 </td>
 </<tr>
